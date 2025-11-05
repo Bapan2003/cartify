@@ -1,31 +1,51 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:qit/presentations/screens/product/widget/product_review.dart';
+import 'package:qit/presentations/screens/product/widget/quantity_dropdown.dart';
 import 'package:qit/providers/cart_provider.dart';
 import '../../../../core/app_helper.dart';
 import '../../../../data/model/cart_item_model.dart';
 import '../../../../data/model/product_model.dart';
+import '../../../../router/app_route.dart';
 
-class ProductInfoSection extends StatelessWidget {
+class ProductInfoSection extends StatefulWidget {
   final Product product;
+
   const ProductInfoSection({super.key, required this.product});
 
   @override
-  Widget build(BuildContext context) {
-    final discountPercent = ((product.retailPrice - product.discountedPrice) /
-        product.retailPrice *
-        100)
-        .toInt();
+  State<ProductInfoSection> createState() => _ProductInfoSectionState();
+}
 
-    final bool isOutOfStock = product.stock <= 0;
+class _ProductInfoSectionState extends State<ProductInfoSection> {
+  final selectedQtyNotifier = ValueNotifier<int>(1);
+
+  @override
+  void dispose() {
+    selectedQtyNotifier.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final discountPercent =
+        ((widget.product.retailPrice - widget.product.discountedPrice) /
+                widget.product.retailPrice *
+                100)
+            .toInt();
+
+    final bool isOutOfStock = widget.product.stock <= 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 🏷️ Product Name
         Text(
-          product.productName,
+          widget.product.productName,
           style: const TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -40,12 +60,12 @@ class ProductInfoSection extends StatelessWidget {
             Icon(Icons.star, color: Colors.amber.shade700, size: 18),
             const SizedBox(width: 4),
             Text(
-              "${product.rating.toStringAsFixed(1)} (${product.reviewsCount} reviews)",
+              "${widget.product.rating.toStringAsFixed(1)} (${widget.product.reviewsCount} reviews)",
               style: const TextStyle(fontSize: 14, color: Colors.black87),
             ),
             const Spacer(),
             Text(
-              "Brand: ${product.brand}",
+              "Brand: ${widget.product.brand}",
               style: const TextStyle(
                 fontSize: 14,
                 color: Colors.blueAccent,
@@ -61,7 +81,7 @@ class ProductInfoSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              "₹${AppHelper.formatAmount(product.discountedPrice.toString())}",
+              "₹${AppHelper.formatAmount(widget.product.discountedPrice.toString())}",
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -70,7 +90,7 @@ class ProductInfoSection extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              "₹${AppHelper.formatAmount(product.retailPrice.toString())}",
+              "₹${AppHelper.formatAmount(widget.product.retailPrice.toString())}",
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
@@ -94,7 +114,7 @@ class ProductInfoSection extends StatelessWidget {
         Row(
           children: [
             Icon(
-              product.isFreeShipping
+              widget.product.isFreeShipping
                   ? Icons.local_shipping_outlined
                   : Icons.payments_outlined,
               color: Colors.teal,
@@ -102,16 +122,18 @@ class ProductInfoSection extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              product.isFreeShipping
-                  ? "Free Shipping"
-                  : "Paid Shipping",
+              widget.product.isFreeShipping ? "Free Shipping" : "Paid Shipping",
               style: const TextStyle(fontSize: 14, color: Colors.black87),
             ),
             const SizedBox(width: 16),
-            const Icon(Icons.restart_alt_rounded, color: Colors.blueAccent, size: 18),
+            const Icon(
+              Icons.restart_alt_rounded,
+              color: Colors.blueAccent,
+              size: 18,
+            ),
             const SizedBox(width: 6),
             Text(
-              "Return: ${product.returnPolicy}",
+              "Return: ${widget.product.returnPolicy}",
               style: const TextStyle(fontSize: 14, color: Colors.black87),
             ),
           ],
@@ -131,12 +153,12 @@ class ProductInfoSection extends StatelessWidget {
             const SizedBox(width: 8),
             if (!isOutOfStock)
               Text(
-                "(${product.stock} left)",
+                "(${widget.product.stock} left)",
                 style: const TextStyle(color: Colors.grey, fontSize: 13),
               ),
             const Spacer(),
             Text(
-              "${product.totalBought}+ bought",
+              "${widget.product.totalBought}+ bought",
               style: const TextStyle(color: Colors.blueGrey, fontSize: 13),
             ),
           ],
@@ -151,63 +173,83 @@ class ProductInfoSection extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          product.description,
-          style: const TextStyle(fontSize: 14, color: Colors.black87, height: 1.4),
+          widget.product.description,
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.black87,
+            height: 1.4,
+          ),
         ),
 
+
+        const SizedBox(height: 16),
+        QuantityDropdown(
+          maxQuantity: widget.product.stock,
+          selectedQtyNotifier: selectedQtyNotifier,
+        ),
         const SizedBox(height: 16),
 
         // ⚙️ Specifications
-        if (product.specifications != null && product.specifications!.isNotEmpty) ...[
+        if (widget.product.specifications != null &&
+            widget.product.specifications!.isNotEmpty) ...[
           const Text(
             "Specifications",
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          ...product.specifications!.entries.map((e) => Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    "${e.key}:",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+          ...widget.product.specifications!.entries.map(
+            (e) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      "${e.key}:",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    e.value.toString(),
-                    style: const TextStyle(color: Colors.black87),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      e.value.toString(),
+                      style: const TextStyle(color: Colors.black87),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          )),
+          ),
           const SizedBox(height: 16),
         ],
+
+
 
         // 🛒 Add to Cart Button
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: () {
+              final qty = selectedQtyNotifier.value;
+
               context.read<CartProvider>().addToCart(
-                CartModel.fromMap(product.toJson(), product.productName),
+                CartModel.fromMap(widget.product.toJson(), widget.product.productName,qty: qty),
               );
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("${product.productName} added to cart")),
+                SnackBar(content: Text("${widget.product.productName} added to cart")),
               );
             },
             icon: const Icon(Icons.shopping_cart_outlined),
             label: const Text("Add to Cart"),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
-              textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              textStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -217,14 +259,47 @@ class ProductInfoSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // ❤️ Wishlist
-        Center(
-          child: TextButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.favorite_border, color: Colors.redAccent),
-            label: const Text("Add to Wishlist"),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () {
+              final qty = selectedQtyNotifier.value;
+              context.push(AppRoute.checkout ,extra: [CartModel.fromMap(widget.product.toJson(), widget.product.id,qty: qty)],);
+
+            },
+            icon: Icon(
+              Icons.flash_on_rounded,
+              color: Colors.amber.shade700,
+            ),
+            label: Text(
+              "Buy Now",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.amber.shade700,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: Colors.amber.shade700, width: 1.8),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              backgroundColor: Colors.transparent,
+            ),
           ),
         ),
+
+
+
+
+        const SizedBox(height: 24),
+
+        ProductReviewSection(
+          productId: widget.product.id,
+          initialReviews: widget.product.reviews,
+        ),
+
       ],
     );
   }

@@ -1,8 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class Product {
   final String id;
   final String productName;
@@ -22,6 +19,9 @@ class Product {
   final int totalBought;
   final DateTime? createdAt;
 
+  /// 🔹 New field
+  final List<Map<String, dynamic>> reviews;
+
   Product({
     required this.id,
     required this.productName,
@@ -40,11 +40,13 @@ class Product {
     required this.specifications,
     required this.totalBought,
     this.createdAt,
+    this.reviews = const [], // default empty list
   });
 
   /// ✅ From Firestore document
   factory Product.fromDoc(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+
     return Product(
       id: doc.id,
       productName: data['product_name'] ?? '',
@@ -58,12 +60,12 @@ class Product {
       brand: data['brand'] ?? '',
       rating: (data['rating'] ?? 0).toDouble(),
       reviewsCount: (data['review_count'] ?? 0).toInt(),
-      isFreeShipping: data['shipping_type']=='Free' ,
+      isFreeShipping: (data['shipping_type']?.toString().toLowerCase() == 'free'),
       returnPolicy: data['return_policy'] ?? 'No return policy available.',
-      specifications:
-      Map<String, dynamic>.from(data['specifications'] ?? {}),
+      specifications: Map<String, dynamic>.from(data['specifications'] ?? {}),
       totalBought: (data['total_buy'] ?? 0).toInt(),
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
+      reviews: List<Map<String, dynamic>>.from(data['reviews'] ?? []),
     );
   }
 
@@ -80,13 +82,15 @@ class Product {
       'stock': stock,
       'brand': brand,
       'rating': rating,
-      'reviews_count': reviewsCount,
-      'is_free_shipping': isFreeShipping,
+      'review_count': reviewsCount,
+      'shipping_type': isFreeShipping ? 'Free' : 'Paid',
       'return_policy': returnPolicy,
       'specifications': specifications,
       'total_buy': totalBought,
       'createdAt': createdAt ?? FieldValue.serverTimestamp(),
+      'reviews': reviews, // 🔹 new field
     };
   }
 }
+
 

@@ -36,7 +36,7 @@ class CartModel {
   };
 
   /// ✅ Create from Firestore document or Map
-  factory CartModel.fromMap(Map<String, dynamic> map, String id) {
+  factory CartModel.fromMap(Map<String, dynamic> map, String id,{int? qty}) {
     final imageUrl = (map['images'] != null &&
         map['images'] is List &&
         (map['images'] as List).isNotEmpty)
@@ -49,7 +49,7 @@ class CartModel {
       image: imageUrl,
       discountedPrice:
       (map['discounted_price'] ?? map['discountedPrice'] ?? 0).toDouble(),
-      quantity: (map['quantity'] ?? 1) as int,
+      quantity:qty?? (map['quantity'] ?? 1) as int,
       stock: (map['stock'] ?? 0) as int,
       shippingType: map['shipping_type'] ?? map['shippingType'] ?? 'Free Shipping',
       returnPolicy:

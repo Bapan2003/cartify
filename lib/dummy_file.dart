@@ -248,4 +248,51 @@ Future<void> uploadDummyProducts(
     onStatusUpdate("❌ Error: $e");
     debugPrint("Upload error: $e");
   }
+}
+
+import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+Future<void> addRandomReviewsToAllProducts() async {
+  final firestore = FirebaseFirestore.instance;
+  final productsSnapshot = await firestore.collection('products').get();
+  final batch = firestore.batch();
+  final random = Random();
+
+  // Some possible sample comments
+  final comments = [
+    'Excellent product quality!',
+    'Good value for money.',
+    'Average experience, but works fine.',
+    'Would definitely recommend!',
+    'Fast delivery and great packaging.',
+    'Did not meet my expectations.',
+    'Great build quality!',
+    'Battery life could be better.',
+    'Totally worth the price.',
+    'Superb performance and design.'
+  ];
+
+  for (var doc in productsSnapshot.docs) {
+    // Generate 1–5 random reviews for each product
+    final int reviewCount = random.nextInt(5) + 1;
+
+    final List<Map<String, dynamic>> randomReviews = List.generate(reviewCount, (index) {
+      return {
+        'createdAt': Timestamp.fromDate(
+          DateTime.now().subtract(Duration(days: random.nextInt(30))), // random date in last 30 days
+        ),
+        'comment': comments[random.nextInt(comments.length)],
+        'rating': (random.nextInt(5) + 1).toDouble(), // 1.0 to 5.0
+      };
+    });
+
+    batch.update(doc.reference, {
+      'reviews': randomReviews,
+      'review_count': randomReviews.length,
+    });
+  }
+
+  await batch.commit();
+  print('✅ Random reviews & review_count added successfully for all products!');
 }*/

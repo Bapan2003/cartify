@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:qit/providers/product_provider.dart';
 import 'package:qit/router/app_route.dart';
 
 import '../../../providers/auth_providers.dart';
+import '../../../providers/wishlist_provider.dart';
 import '../../widgets/profile_avatar.dart';
 import 'dart:io';
 
@@ -49,8 +51,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (_isChanged.value != hasChanged) _isChanged.value = hasChanged;
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -156,8 +156,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               userData['photoUrl'];
                                           if (_newProfileImage != null) {
                                             final uid = auth.user?.uid ?? '';
-                                            imageUrl =
-                                            await context.read<AuthProvider>().uploadProfileImage(uid, _newProfileImage!);
+                                            imageUrl = await context
+                                                .read<AuthProvider>()
+                                                .uploadProfileImage(
+                                                  uid,
+                                                  _newProfileImage!,
+                                                );
                                           }
 
                                           await auth.updateProfile(
@@ -215,6 +219,108 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         );
                       },
                     ),
+
+                    const SizedBox(height: 20),
+                    Text(
+                      "My Wishlist",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    Consumer<WishlistProvider>(
+                      builder: (context, wishlistProvider, _) {
+                        final wishlistItems = wishlistProvider.wishlistItems; // list of product models
+                        final itemCount = wishlistItems.length;
+
+                        if (itemCount == 0) {
+                          return const Text(
+                            "You haven't added anything yet.",
+                            style: TextStyle(color: Colors.grey),
+                          );
+                        }
+
+                        // Take first 2 items for display
+                        final firstTwoIds = wishlistItems.take(3).toList();
+                        final remainingCount = itemCount - firstTwoIds.length;
+
+                        return Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              ...firstTwoIds.map((id) => FutureBuilder<Map<String, dynamic>?>(
+                                future:  context.read<ProductProvider>().fetchProductById(id), // your method to fetch product data
+                                builder: (context, snapshot) {
+                                  if (snapshot.connectionState == ConnectionState.waiting) {
+                                    return Container(
+                                      width: 65,
+                                      height: 65,
+                                      margin: const EdgeInsets.only(right: 8),
+                                      color: Colors.grey.shade200,
+                                    );
+                                  }
+
+                                  if (!snapshot.hasData) {
+                                    return Container(
+                                      width: 65,
+                                      height: 65,
+                                      margin: const EdgeInsets.only(right: 8),
+                                      color: Colors.grey.shade200,
+                                      child: const Icon(Icons.error),
+                                    );
+                                  }
+
+                                  final product = snapshot.data!;
+                                  final imageUrl = product['images'][0] ?? '';
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        imageUrl,
+                                        width: 65,
+                                        height: 65,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => const Icon(Icons.error),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )),
+
+
+                              // Show +N more if there are more items
+                              if (remainingCount > 0)
+                                Container(
+                                  width: 65,
+                                  height: 65,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: Colors.grey.shade300,
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    '+$remainingCount',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+
                   ],
                 ),
               ),
@@ -229,7 +335,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 50, left: 24, right: 24),
+                  padding: const EdgeInsets.only(
+                    bottom: 50,
+                    left: 24,
+                    right: 24,
+                  ),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(14),
                     onTap: () async {
@@ -267,7 +377,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         height: 55,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Colors.orange.shade600, Colors.orange.shade200],
+                            colors: [
+                              Colors.orange.shade600,
+                              Colors.orange.shade200,
+                            ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -299,8 +412,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
-              )
-
+              ),
             ],
           );
         },

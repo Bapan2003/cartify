@@ -82,6 +82,23 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
+  Future<Map<String, dynamic>?> fetchProductById(String productId) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('products') // your products collection
+          .doc(productId)
+          .get();
+
+      if (doc.exists) {
+        return doc.data();
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print("Error fetching product $productId: $e");
+      return null;
+    }
+  }
 
   Stream<QuerySnapshot<Map<String, dynamic>>> latestArrivals(){
     try{

@@ -45,11 +45,11 @@ class ProductDetailsPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: isWeb
                   ? Column(
-
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.center,                          children: [
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
                             // 📸 Left Side — Product Images
                             Expanded(
                               flex: 2,
@@ -68,6 +68,7 @@ class ProductDetailsPage extends StatelessWidget {
                                 ),
                                 child: ImageCarousel(
                                   imageList: productItem.imageUrls,
+                                  productId: productItem.id,
                                 ),
                               ),
                             ),
@@ -95,11 +96,9 @@ class ProductDetailsPage extends StatelessWidget {
                             ),
 
                             const SizedBox(width: 32),
-
-
                           ],
                         ),
-                        const SizedBox(height: 15,),
+                        const SizedBox(height: 15),
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
@@ -130,7 +129,10 @@ class ProductDetailsPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              ImageCarousel(imageList: productItem.imageUrls),
+                              ImageCarousel(
+                                imageList: productItem.imageUrls,
+                                productId: productItem.id,
+                              ),
                               const SizedBox(height: 16),
                               ProductInfoSection(product: productItem),
                             ],

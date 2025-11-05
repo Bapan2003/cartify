@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart';
 import 'package:provider/provider.dart';
 import 'package:qit/core/app_helper.dart';
+import 'package:qit/presentations/widgets/my_wish.dart';
+import 'package:qit/providers/wishlist_provider.dart';
 
 import '../../../../data/model/product_model.dart';
 import '../../../../providers/product_provider.dart';
@@ -130,65 +132,74 @@ class _ProductCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       clipBehavior: Clip.antiAlias,
       elevation: 2,
-      child: InkWell(
-        onTap: () {
-          context.pushNamed(
-            AppRoute.productDetails,
-            queryParameters: {'productId': id},
-          );
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 🖼️ Product Image
-            AspectRatio(
-              aspectRatio: 1,
-              child: Image.network(
-                image,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.image_not_supported),
-              ),
-            ),
-
-            // 📝 Product Details
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 14),
+      child: Stack(
+        children: [
+          InkWell(
+            onTap: () {
+              context.pushNamed(
+                AppRoute.productDetails,
+                queryParameters: {'productId': id},
+              );
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 🖼️ Product Image
+                AspectRatio(
+                  aspectRatio: 1,
+                  child: Image.network(
+                    image,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.image_not_supported),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
+                ),
+
+                // 📝 Product Details
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "₹$price",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 14),
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        "₹$originalPrice",
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                          decoration: TextDecoration.lineThrough,
-                        ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Text(
+                            "₹$price",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            "₹$originalPrice",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: WishButton(id: id),
+          ),
+        ],
       ),
     );
   }

@@ -11,6 +11,7 @@ import '../providers/cart_provider.dart';
 import '../providers/dashboard_provider.dart';
 import '../providers/product_provider.dart';
 import '../providers/search_history_provider.dart';
+import '../providers/wishlist_provider.dart';
 import '../router/app_router_config.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -42,6 +43,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
         ChangeNotifierProvider(create: (_) => SearchHistoryProvider()..init()),
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
+        ChangeNotifierProvider(create: (_) => WishlistProvider()),
 
       ],
       child: MaterialApp.router(

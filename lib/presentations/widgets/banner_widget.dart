@@ -143,7 +143,7 @@ class _BannerCard extends StatelessWidget {
               // 🔹 Product Image
               Image.network(
                 product.imageUrls[0],
-                fit: BoxFit.cover,
+                fit: BoxFit.cover,errorBuilder: (_,__,___)=>Icon(Icons.error),
               ),
 
               // 🔹 Gradient Overlay

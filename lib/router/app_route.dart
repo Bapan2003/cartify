@@ -3,4 +3,5 @@ class AppRoute {
   static const login = '/login';
   static const dashboard = '/dashboard';
   static const productDetails = '/product-details';
+  static const checkout = '/checkout';
 }

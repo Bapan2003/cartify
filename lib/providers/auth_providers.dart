@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -103,6 +106,21 @@ class AuthProvider extends ChangeNotifier {
       return _authServices.updateProfile(name, phone,photo: photo,user: user);
     }catch(e){
       rethrow;
+    }
+  }
+
+
+  Future<String?> uploadProfileImage(String uid, File imageFile) async {
+    try {
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('profile_images')
+          .child(uid);
+      await ref.putFile(imageFile);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      debugPrint('Image upload failed: $e');
+      return null;
     }
   }
 }

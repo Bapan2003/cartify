@@ -50,19 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (_isChanged.value != hasChanged) _isChanged.value = hasChanged;
   }
 
-  Future<String?> _uploadProfileImage(String uid, File imageFile) async {
-    try {
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('profile_images')
-          .child(uid);
-      await ref.putFile(imageFile);
-      return await ref.getDownloadURL();
-    } catch (e) {
-      debugPrint('Image upload failed: $e');
-      return null;
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +72,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           final userData = snapshot.data!.data()!;
           _initialData = userData;
-          print(userData);
 
           _nameController.text = userData['name'] ?? '';
           _phoneController.text = userData['phone'] ?? '';
@@ -170,10 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           if (_newProfileImage != null) {
                                             final uid = auth.user?.uid ?? '';
                                             imageUrl =
-                                                await _uploadProfileImage(
-                                                  uid,
-                                                  _newProfileImage!,
-                                                );
+                                            await context.read<AuthProvider>().uploadProfileImage(uid, _newProfileImage!);
                                           }
 
                                           await auth.updateProfile(

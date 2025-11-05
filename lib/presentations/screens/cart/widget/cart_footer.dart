@@ -12,7 +12,7 @@ class CartFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final itemTotal = cart.totalPrice;
     final deliveryCharge = itemTotal * 0.05;
-    final cappedDelivery = deliveryCharge.clamp(40, 120); // 5% but 40–120 range
+    final cappedDelivery = deliveryCharge.clamp(40, 200); // 5% but 40–120 range
     final totalWithDelivery = itemTotal + cappedDelivery;
     final freeDelivery = cappedDelivery;
     final orderTotal = totalWithDelivery - freeDelivery;

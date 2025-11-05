@@ -32,6 +32,10 @@ class CartItemCard extends StatelessWidget {
               width: 80,
               height: 80,
               fit: BoxFit.cover,
+              errorBuilder: (_,__,___)=>SizedBox(
+                  width: 80,
+                  height: 80,
+                  child: Icon(Icons.error)),
             ),
           ),
           const SizedBox(width: 12),

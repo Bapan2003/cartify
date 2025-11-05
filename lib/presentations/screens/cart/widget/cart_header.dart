@@ -1,8 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:qit/core/app_helper.dart';
 import 'package:qit/presentations/widgets/proceed_button.dart';
+import 'package:qit/router/app_route.dart';
 
 import '../../../../providers/cart_provider.dart';
 
@@ -12,7 +15,6 @@ class CartHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
     final itemTotal = cart.totalPrice;
     final deliveryCharge = itemTotal * 0.05;
     final cappedDelivery = deliveryCharge.clamp(40, 120); // 5%, min ₹40, max ₹120
@@ -56,12 +58,14 @@ class CartHeader extends StatelessWidget {
             style: TextStyle(color: Colors.green, fontWeight: FontWeight.w500),
           ),
         ),
-        ProceedButton(onPressed: onPressed),
+        ProceedButton(onPressed:()=>onPressed(context)),
         const Divider(height: 24),
 
       ],
     );
   }
 
-  void onPressed(){}
+  void onPressed(BuildContext context){
+    context.push(AppRoute.checkout ,extra: context.read<CartProvider>().cartItems,);
+  }
 }

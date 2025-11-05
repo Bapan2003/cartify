@@ -8,9 +8,12 @@ import 'package:qit/presentations/screens/dashboard/dashboard_screen.dart';
 import 'package:qit/presentations/screens/product/product_details_screen.dart';
 import 'package:qit/presentations/screens/profile/profile_screen.dart';
 
+import '../data/model/cart_item_model.dart';
 import '../presentations/my_app.dart';
+import '../presentations/screens/checkout/checkout_screen.dart';
 import '../presentations/screens/splash/splash_screen.dart';
 import '../providers/auth_providers.dart';
+import '../providers/checkout_provider.dart';
 import 'app_route.dart';
 
 
@@ -75,6 +78,21 @@ class AppRouterConfig {
       },
     ),
 
+    GoRoute(
+      path: AppRoute.checkout,
+      name: AppRoute.checkout,
+      pageBuilder: (context, state) {
+        final cartItems = state.extra as List<CartModel>? ?? [];
+        return buildTransitionPage(
+          child: ChangeNotifierProvider(
+            create: (_) => CheckoutProvider()..setCheckoutItems(cartItems),
+            child: const CheckoutPage(),
+          ),
+          state: state,
+          type: TransitionType.slide,
+        );
+      },
+    ),
   ];
 
   void dispose() {}

@@ -22,7 +22,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
 
   // ✅ ValueNotifier for password visibility
@@ -94,20 +93,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                 },
                               ),
                               const SizedBox(height: 12),
-                              _ValidatedTextField(
-                                controller: _phoneController,
-                                label: "Phone Number",
-                                keyboardType: TextInputType.phone,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return "Phone number is required";
-                                  }
-                                  if (!RegExp(r'^[0-9]{10}$').hasMatch(value)) {
-                                    return "Enter a valid 10-digit phone number";
-                                  }
-                                  return null;
-                                },
-                              ),
+                              // _ValidatedTextField(
+                              //   controller: _phoneController,
+                              //   label: "Phone Number",
+                              //   keyboardType: TextInputType.phone,
+                              //   validator: (value) {
+                              //     if (value == null || value.isEmpty) {
+                              //       return "Phone number is required";
+                              //     }
+                              //     if (!RegExp(r'^[0-9]{10}$').hasMatch(value)) {
+                              //       return "Enter a valid 10-digit phone number";
+                              //     }
+                              //     return null;
+                              //   },
+                              // ),
                               const SizedBox(height: 12),
                             ],
                           );
@@ -283,12 +282,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 padding: const EdgeInsets.all(16),
                               ),
                               const SizedBox(height: 12),
-                              CupertinoTextField(
-                                controller: _phoneController,
-                                placeholder: "Phone Number",
-                                keyboardType: TextInputType.phone,
-                                padding: const EdgeInsets.all(16),
-                              ),
+                              // CupertinoTextField(
+                              //   controller: _phoneController,
+                              //   placeholder: "Phone Number",
+                              //   keyboardType: TextInputType.phone,
+                              //   padding: const EdgeInsets.all(16),
+                              // ),
                               const SizedBox(height: 12),
                             ],
                           );
@@ -422,7 +421,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _emailController.text.trim(),
           _passwordController.text.trim(),
           _nameController.text.trim(),
-          _phoneController.text.trim(),
+          // _phoneController.text.trim(),
         );
       }
 

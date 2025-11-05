@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 abstract class AuthServices{
    Future<void> signInWithEmail({required String email, required String password});
    Future<void> signUpWithEmail(
-       {required String email, required String password, required String name, required String phoneNumber});
+       {required String email, required String password, required String name,});
    Future<void> signOut();
    Stream<User?> get userChanges;
    Future<void> signInWithGoogle();

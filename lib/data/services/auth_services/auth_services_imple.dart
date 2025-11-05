@@ -111,14 +111,14 @@ class AuthServicesImplementation implements AuthServices{
   }
 
   @override
-  Future<void> signUpWithEmail({required String email, required String password, required String name, required String phoneNumber}) async {
+  Future<void> signUpWithEmail({required String email, required String password, required String name, }) async {
     try {
       final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
 
       );
-      await _createUserDocIfNeeded(userCredential.user!,name: name,phone: phoneNumber);
+      await _createUserDocIfNeeded(userCredential.user!,name: name,);
     } on FirebaseAuthException catch (e) {
       // ✅ Friendly messages for common sign-up errors
       String message;

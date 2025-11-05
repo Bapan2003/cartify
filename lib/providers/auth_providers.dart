@@ -51,12 +51,12 @@ class AuthProvider extends ChangeNotifier {
     String email,
     String password,
     String name,
-    String phoneNumber,
+    // String phoneNumber,
   ) async {
     _isLoading=true;
     notifyListeners();
     try{
-      await _authServices.signUpWithEmail(email: email, password: password,name: name,phoneNumber: phoneNumber);
+      await _authServices.signUpWithEmail(email: email, password: password,name: name,);
     }catch(e){
       rethrow;
     }finally{

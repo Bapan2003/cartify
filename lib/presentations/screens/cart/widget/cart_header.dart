@@ -66,6 +66,6 @@ class CartHeader extends StatelessWidget {
   }
 
   void onPressed(BuildContext context){
-    context.push(AppRoute.checkout ,extra: context.read<CartProvider>().cartItems,);
+    context.push('${AppRoute.checkout}?from=cart' ,extra: context.read<CartProvider>().cartItems,);
   }
 }

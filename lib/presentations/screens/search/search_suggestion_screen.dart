@@ -17,7 +17,7 @@ class SearchSuggestionPage extends StatelessWidget {
     final query = searchProvider.query;
 
     // get all product names from Firestore
-    final allNames = searchProvider.filteredProducts
+    final allNames = searchProvider.queryResult
         .map((doc) => (doc.data() as Map<String, dynamic>)['product_name'] as String? ?? '')
         .where((name) => name.isNotEmpty)
         .toSet()
@@ -81,9 +81,7 @@ class SearchSuggestionPage extends StatelessWidget {
           constraints: BoxConstraints(
             maxWidth: isWeb ? 600 : double.infinity, // Limit width on web
           ),
-          child: searchProvider.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : ListView.builder(
+          child: ListView.builder(
             padding: EdgeInsets.symmetric(
               horizontal: isWeb ? 16 : 0, // Add padding on web
             ),

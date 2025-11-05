@@ -12,7 +12,7 @@ class ProceedButton extends StatelessWidget {
     final bool isIOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
 
     // Responsive width for web / large screens
-    final double maxWidth = MediaQuery.of(context).size.width > 600 ? 600 : double.infinity;
+    final double maxWidth = MediaQuery.of(context).size.width > 800 ? 800 : double.infinity;
 
     return Center(
       child: ConstrainedBox(

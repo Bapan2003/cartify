@@ -17,105 +17,228 @@ class SearchScreen extends StatelessWidget {
     final bool isWeb = kIsWeb && MediaQuery.of(context).size.width > 600;
 
     return Scaffold(
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildFilterChip(context, provider, 'Free Shipping'),
-                  _buildFilterChip(context, provider, 'Paid Shipping'),
-                  _buildFilterChip(context, provider, 'iPhone'),
-                  _buildFilterChip(context, provider, 'All Discounts'),
-                  _buildFilterChip(context, provider, '10% off or more'),
-                  _buildFilterChip(context, provider, '25% off or more'),
-                  _buildFilterChip(context, provider, 'Include Out of Stock'),
-                  _buildFilterChip(context, provider, 'Value Pick'),
-                ],
-              ),
-            ),
+      appBar: AppBar(
+        title: const Text('Search'),
+        actions: [
+          // Sort dropdown
+          DropdownButton<String>(
+            value: provider.sortBy,
+            items: [
+              'Low to High',
+              'High to Low',
+              'A to Z',
+              'Z to A',
+              'Latest',
+              'Oldest',
+              'High Rating',
+              'Low Rating'
+            ]
+                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                .toList(),
+            onChanged: (value) {
+              if (value != null) provider.setSortBy(value);
+            },
           ),
-          provider.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : provider.filteredProducts.isEmpty
-              ? const Center(child: Text("No matching products"))
-              : Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: isWeb
-                        ? GridView.builder(
-                            gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount:
-                                      MediaQuery.of(context).size.width ~/ 220,
-                                  crossAxisSpacing: 16,
-                                  mainAxisSpacing: 16,
-                                  childAspectRatio: 0.75,
-                                ),
-                            itemCount: provider.filteredProducts.length,
-                            itemBuilder: (context, index) {
-                              final doc = provider.filteredProducts[index];
-                              final product = Product.fromDoc(doc);
-                              return _SearchListItem(
-                                id: doc.id,
-                                title: product.productName,
-                                image: product.imageUrls[0] ?? '',
-                                price: product.discountedPrice,
-                                originalPrice: product.retailPrice,
-                              );
-                            },
-                          )
-                        : ListView.builder(
-                            itemCount: provider.filteredProducts.length,
-                            itemBuilder: (context, index) {
-                              final doc = provider.filteredProducts[index];
-                              final product = Product.fromDoc(doc);
-                              return _SearchListItem(
-                                id: doc.id,
-                                title: product.productName,
-                                image: product.imageUrls[0] ?? '',
-                                price: product.discountedPrice,
-                                originalPrice: product.retailPrice,
-                              );
-                            },
-                          ),
-                  ),
-                ),
+          IconButton(
+            icon: const Icon(Icons.filter_alt_outlined),
+            onPressed: () => _showFilterSheet(context),
+          ),
         ],
+      ),
+      body: provider.filteredProducts.isEmpty
+          ? const Center(child: Text("No matching products"))
+          : Padding(
+        padding: const EdgeInsets.all(12),
+        child: isWeb
+            ? GridView.builder(
+          gridDelegate:
+          SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount:
+            MediaQuery.of(context).size.width ~/ 220,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 0.75,
+          ),
+          itemCount: provider.filteredProducts.length,
+          itemBuilder: (context, index) {
+            final doc = provider.filteredProducts[index];
+            final product = Product.fromDoc(doc);
+            return _SearchItemCard(
+              id: doc.id,
+              title: product.productName,
+              image: product.imageUrls[0] ?? '',
+              price: product.discountedPrice,
+              originalPrice: product.retailPrice,
+            );
+          },
+        )
+            : ListView.builder(
+          itemCount: provider.filteredProducts.length,
+          itemBuilder: (context, index) {
+            final doc = provider.filteredProducts[index];
+            final product = Product.fromDoc(doc);
+            return _SearchListItem(
+              id: doc.id,
+              title: product.productName,
+              image: product.imageUrls[0] ?? '',
+              price: product.discountedPrice,
+              originalPrice: product.retailPrice,
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildFilterChip(
-    BuildContext context,
-    SearchProvider provider,
-    String label,
-  ) {
-    final isSelected = provider.selectedFilters.contains(label);
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: FilterChip(
-        label: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black87,
-            fontWeight: FontWeight.w500,
+  void _showFilterSheet(BuildContext context) {
+    final provider = Provider.of<SearchProvider>(context, listen: false);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            left: 20,
+            right: 20,
+            top: 20),
+        child: Consumer<SearchProvider>(
+          builder: (context, provider, _) => SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Shipping
+                const Text('Shipping', style: TextStyle(fontWeight: FontWeight.bold)),
+                Row(
+                  children: [
+                    ChoiceChip(
+                      label: const Text('Free'),
+                      selected: provider.selectedShipping == 'Free',
+                      onSelected: (_) => provider.setShipping('Free'),
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: const Text('Paid'),
+                      selected: provider.selectedShipping == 'Paid',
+                      onSelected: (_) => provider.setShipping('Paid'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // Discount
+                const Text('Discount', style: TextStyle(fontWeight: FontWeight.bold)),
+                Wrap(
+                  spacing: 8,
+                  children: ['All', '10% off', '25% off']
+                      .map((e) => FilterChip(
+                    label: Text(e),
+                    selected: provider.selectedDiscounts.contains(e),
+                    onSelected: (_) => provider.toggleDiscount(e),
+                  ))
+                      .toList(),
+                ),
+                const SizedBox(height: 10),
+
+                // Brand
+                const Text('Brand', style: TextStyle(fontWeight: FontWeight.bold)),
+                Wrap(
+                  spacing: 8,
+                  children: provider.brands
+                      .map((brand) => FilterChip(
+                    label: Text(brand),
+                    selected: provider.selectedBrands.contains(brand),
+                    onSelected: (_) => provider.toggleBrand(brand),
+                  ))
+                      .toList(),
+                ),
+                const SizedBox(height: 10),
+
+                // Category
+                const Text('Category', style: TextStyle(fontWeight: FontWeight.bold)),
+                Wrap(
+                  spacing: 8,
+                  children: provider.categories
+                      .map((cat) => FilterChip(
+                    label: Text(cat),
+                    selected: provider.selectedCategories.contains(cat),
+                    onSelected: (_) => provider.toggleCategory(cat),
+                  ))
+                      .toList(),
+                ),
+                const SizedBox(height: 10),
+
+                // Value Pick
+                Row(
+                  children: [
+                    const Text('Value Pick', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Switch(
+                      value: provider.valuePick,
+                      onChanged: (_) => provider.toggleValuePick(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          provider.clearFilters(); // You need to implement this
+                          Navigator.pop(context);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.amber.shade700, width: 1),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          backgroundColor: Colors.transparent,
+                        ),
+                        child: Text(
+                          "Clear Filters",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.amber.shade700,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // const SizedBox(width: 10),
+                    // Expanded(
+                    //   child: ElevatedButton(
+                    //     onPressed: () {
+                    //       provider.applyFilters();
+                    //       Navigator.pop(context);
+                    //     },
+                    //     style: ElevatedButton.styleFrom(
+                    //       padding: const EdgeInsets.symmetric(vertical: 14),
+                    //       textStyle: const TextStyle(
+                    //           fontSize: 16,
+                    //           fontWeight: FontWeight.w600,
+                    //           color: Colors.white
+                    //       ),
+                    //       shape: RoundedRectangleBorder(
+                    //         borderRadius: BorderRadius.circular(10),
+                    //       ),
+                    //       backgroundColor: Colors.amber.shade700,
+                    //     ),
+                    //     child: const Text('Apply Filters',style: TextStyle(color: Colors.white),),
+                    //   ),
+                    // ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
-        selected: isSelected,
-        onSelected: (_) => provider.toggleFilter(label),
-        selectedColor: const Color(0xFFFFA41C),
-        // Amazon orange
-        backgroundColor: Colors.white,
-        side: BorderSide(color: Colors.orange.shade300),
-        showCheckmark: false,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
     );
   }

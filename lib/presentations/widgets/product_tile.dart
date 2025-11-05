@@ -130,29 +130,44 @@ class _ProductTileState extends State<ProductTile> {
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _isHovered ? Colors.orange : Colors.grey,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    onPressed: () {
-                      cartProvider.addToCart(
-                        CartModel.fromMap(product.toJson(), product.productName),
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("${product.productName} added to cart")),
+                  child: Selector<CartProvider,bool>(  // or CheckoutProvider
+                    builder: (context, isCartItem, child) {
+                      final isAdded = isCartItem; // implement this method in your provider
+
+                      return ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isAdded ? Colors.orange : (_isHovered ? Colors.orange : Colors.grey),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () {
+                          if (!isAdded) {
+                            cartProvider.addToCart(
+                              CartModel.fromMap(product.toJson(), product.id),
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("${product.productName} added to cart")),
+                            );
+                          } else {
+                            // optional: navigate to checkout or show a message
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("${product.productName} is already in cart")),
+                            );
+                          }
+                        },
+                        icon: Icon(isAdded ? Icons.check : Icons.add_shopping_cart, size: 18),
+                        label: Text(isAdded ? "Added" : "Add"),
                       );
                     },
-                    icon: const Icon(Icons.add_shopping_cart, size: 18),
-                    label: const Text("Add"),
+                    selector: (_,state)=>state.isInCart(product.id),
                   ),
                 ),
               ),
+
               const SizedBox(height: 8),
             ],
           ),

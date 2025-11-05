@@ -1,15 +1,18 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:qit/core/app_helper.dart';
 
 import 'package:qit/presentations/widgets/gradient_bar.dart';
 
 import '../../../providers/checkout_provider.dart';
+import '../../../router/app_route.dart';
 import '../cart/widget/cart_item.dart';
 
-class CheckoutPage extends StatelessWidget {
-  const CheckoutPage({super.key});
+class CheckoutScreen extends StatelessWidget {
+  const CheckoutScreen({super.key});
 
   @override
   @override
@@ -43,69 +46,75 @@ class CheckoutPage extends StatelessWidget {
           Text("Order Summary", style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 10),
           for (var item in provider.checkoutItems)
-            Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300),
+            InkWell(
+              onTap: () => context.pushNamed(
+                AppRoute.productDetails,
+                queryParameters: {'productId': item.id},
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 🖼️ Product image
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      item.image,
-                      height: 55,
-                      width: 55,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => SizedBox(
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 🖼️ Product image
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        item.image,
                         height: 55,
                         width: 55,
-                        child: Icon(Icons.error),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => SizedBox(
+                          height: 55,
+                          width: 55,
+                          child: Icon(Icons.error),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
+                    const SizedBox(width: 12),
 
-                  // 📝 Product info
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                    // 📝 Product info
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Qty: ${item.quantity} • ₹${item.discountedPrice.toStringAsFixed(2)}",
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.black54,
+                          const SizedBox(height: 4),
+                          Text(
+                            "Qty: ${item.quantity} • ₹${AppHelper.formatAmount(item.discountedPrice.toStringAsFixed(2))}",
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.black54,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
 
-                  // 💰 Price
-                  Text(
-                    "₹${(item.discountedPrice * item.quantity).toStringAsFixed(2)}",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                    // 💰 Price
+                    Text(
+                      "₹${AppHelper.formatAmount((item.discountedPrice * item.quantity).toStringAsFixed(2))}",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 
@@ -115,7 +124,7 @@ class CheckoutPage extends StatelessWidget {
             children: [
               Text('Items:', style: baseStyle),
               Text(
-                '₹${provider.subTotal.toStringAsFixed(2)}',
+                '₹${AppHelper.formatAmount(provider.subTotal.toStringAsFixed(2))}',
                 style: baseStyle.copyWith(fontWeight: FontWeight.w500),
               ),
             ],
@@ -125,7 +134,7 @@ class CheckoutPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Delivery:', style: baseStyle),
-              Text('₹${cappedDelivery.toStringAsFixed(2)}', style: baseStyle),
+              Text('₹${AppHelper.formatAmount(cappedDelivery.toStringAsFixed(2))}', style: baseStyle),
             ],
           ),
           const SizedBox(height: 6),
@@ -142,7 +151,7 @@ class CheckoutPage extends StatelessWidget {
             children: [
               Text('Free Delivery:', style: baseStyle),
               Text(
-                '-₹${freeDelivery.toStringAsFixed(2)}',
+                '-₹${AppHelper.formatAmount(freeDelivery.toStringAsFixed(2))}',
                 style: baseStyle.copyWith(
                   color: Colors.green.shade700,
                   fontWeight: FontWeight.w600,
@@ -161,7 +170,7 @@ class CheckoutPage extends StatelessWidget {
                 ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
               ),
               Text(
-                '₹${orderTotal.toStringAsFixed(2)}',
+                '₹${AppHelper.formatAmount(orderTotal.toStringAsFixed(2))}',
                 style: Theme.of(
                   context,
                 ).textTheme.titleLarge!.copyWith(fontWeight: FontWeight.bold),
@@ -172,17 +181,43 @@ class CheckoutPage extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: isIOS
-                ? CupertinoButton.filled(
-                    onPressed: provider.placeOrder,
-                    child: const Text("Place Order"),
+                ? CupertinoButton(
+                    borderRadius: BorderRadius.circular(10),
+                    color: const Color(0xFFFFA41C),
+                    // Amazon-like orange
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+              onPressed: () => provider.placeOrder(context,freeDelivery,),
+                    child: const Text(
+                      "Place Order",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
                   )
-                : ElevatedButton.icon(
-                    onPressed: provider.placeOrder,
-                    icon: const Icon(Icons.shopping_bag_outlined),
-                    label: const Text("Place Order"),
+                : ElevatedButton(
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFA41C),
+                      // Amazon orange
+                      foregroundColor: Colors.white,
+                      shadowColor: Colors.orangeAccent.withOpacity(0.4),
+                      elevation: 3,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      textStyle: const TextStyle(fontSize: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      minimumSize: const Size.fromHeight(50),
+                    ),
+                    onPressed: () => provider.placeOrder(context,freeDelivery,),
+                    child: Text(
+                      "Place Order",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.4,
+                      ),
                     ),
                   ),
           ),
@@ -194,7 +229,10 @@ class CheckoutPage extends StatelessWidget {
     Widget buildLeftContent() => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Delivery Address", style: Theme.of(context).textTheme.titleLarge),
+        Text(
+          "Delivering to ${provider.savedAddresses[provider.selectedAddress]['name']}",
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(12),
@@ -204,13 +242,14 @@ class CheckoutPage extends StatelessWidget {
             color: Colors.grey.shade100,
           ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(Icons.location_on, color: Colors.blueAccent),
+              const Icon(Icons.location_on, color: Colors.red),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  provider.savedAddresses[provider.selectedAddress],
+                  provider.savedAddresses[provider
+                      .selectedAddress]['addressLine'],
                   style: const TextStyle(fontSize: 15),
                 ),
               ),
@@ -219,7 +258,7 @@ class CheckoutPage extends StatelessWidget {
                 child: const Text(
                   "Change",
                   style: TextStyle(
-                    color: Colors.blueAccent,
+                    color: Colors.orange,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -321,6 +360,7 @@ class CheckoutPage extends StatelessWidget {
     final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
 
     if (isIOS) {
+      // 🔹 Cupertino (iOS) Style Bottom Sheet
       showCupertinoModalPopup(
         context: context,
         builder: (_) => CupertinoActionSheet(
@@ -335,26 +375,41 @@ class CheckoutPage extends StatelessWidget {
                 );
                 Navigator.pop(context);
               },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    address,
+                    address['name'],
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: CupertinoColors.black,
+                    ),
+                  ),
+                  Text(
+                    address['mobile'],
+                    style: const TextStyle(color: CupertinoColors.systemGrey),
+                  ),
+                  Text(
+                    address['addressLine'],
+                    textAlign: TextAlign.center,
                     style: TextStyle(
+                      color: isSelected
+                          ? CupertinoColors.activeOrange
+                          : CupertinoColors.black,
                       fontWeight: isSelected
                           ? FontWeight.bold
                           : FontWeight.normal,
-                      color: isSelected ? Colors.orange : CupertinoColors.black,
                     ),
                   ),
-                  if (isSelected) ...[
-                    const SizedBox(width: 8),
-                    const Icon(
-                      CupertinoIcons.check_mark_circled_solid,
-                      size: 20,
-                      color: CupertinoColors.activeGreen,
+                  if (isSelected)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 4),
+                      child: Icon(
+                        CupertinoIcons.check_mark_circled_solid,
+                        size: 20,
+                        color: CupertinoColors.activeGreen,
+                      ),
                     ),
-                  ],
                 ],
               ),
             );
@@ -362,6 +417,7 @@ class CheckoutPage extends StatelessWidget {
         ),
       );
     } else {
+      // 🔹 Material (Android/Web) Style Bottom Sheet
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -382,7 +438,7 @@ class CheckoutPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                // 🔹 Show all saved addresses
+                // 🔹 List of Saved Addresses
                 ...provider.savedAddresses.map((address) {
                   final isSelected =
                       address ==
@@ -407,13 +463,34 @@ class CheckoutPage extends StatelessWidget {
                         Icons.location_on_outlined,
                         color: Colors.red,
                       ),
-                      title: Text(
-                        address,
-                        style: TextStyle(
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
+                      title: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            address['name'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            address['mobile'],
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            address['addressLine'],
+                            style: TextStyle(
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
                       ),
                       trailing: isSelected
                           ? const Icon(

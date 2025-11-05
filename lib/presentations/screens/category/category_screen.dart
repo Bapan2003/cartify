@@ -145,7 +145,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
           products[index].discountedPrice.toStringAsFixed(2),
         ),
         originalPrice: AppHelper.formatAmount(
-          products[index].discountedPrice.toStringAsFixed(2),
+          products[index].retailPrice.toStringAsFixed(2),
         ),
       ),
     );

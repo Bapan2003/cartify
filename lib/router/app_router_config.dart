@@ -7,10 +7,12 @@ import 'package:qit/presentations/screens/auth/login.dart';
 import 'package:qit/presentations/screens/dashboard/dashboard_screen.dart';
 import 'package:qit/presentations/screens/product/product_details_screen.dart';
 import 'package:qit/presentations/screens/profile/profile_screen.dart';
+import 'package:qit/presentations/screens/profile/profile_settings_screen.dart';
 
 import '../data/model/cart_item_model.dart';
 import '../presentations/my_app.dart';
 import '../presentations/screens/checkout/checkout_screen.dart';
+import '../presentations/screens/checkout/checkout_success_screen.dart';
 import '../presentations/screens/splash/splash_screen.dart';
 import '../providers/auth_providers.dart';
 import '../providers/checkout_provider.dart';
@@ -83,11 +85,34 @@ class AppRouterConfig {
       name: AppRoute.checkout,
       pageBuilder: (context, state) {
         final cartItems = state.extra as List<CartModel>? ?? [];
+        final bool isFromCart=state.uri.queryParameters['from']=='cart';
         return buildTransitionPage(
           child: ChangeNotifierProvider(
-            create: (_) => CheckoutProvider()..setCheckoutItems(cartItems),
-            child: const CheckoutPage(),
+            create: (_) => CheckoutProvider()..setCheckoutItems(cartItems,isFromCart),
+            child: const CheckoutScreen(),
           ),
+          state: state,
+          type: TransitionType.slide,
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoute.checkoutSuccess,
+      name: AppRoute.checkoutSuccess,
+      pageBuilder: (context, state) {
+        return buildTransitionPage(
+          child: CheckoutSuccessScreen(),
+          state: state,
+          type: TransitionType.scale,
+        );
+      },
+    ),
+    GoRoute(
+      path: AppRoute.editProfile,
+      name: AppRoute.editProfile,
+      pageBuilder: (context, state) {
+        return buildTransitionPage(
+          child: EditProfilePage(),
           state: state,
           type: TransitionType.slide,
         );

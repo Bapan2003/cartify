@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:qit/presentations/screens/cart/widget/cart_footer.dart';
@@ -13,9 +14,9 @@ class CartScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final platform = Theme.of(context).platform;
     final cart = context.watch<CartProvider>();
-    final isWide = MediaQuery.of(context).size.width > 600;
+    final size = MediaQuery.of(context).size ;
 
-    final isWeb = MediaQuery.of(context).size.width > 900;
+    final isWeb = kIsWeb && size.width > 800;
 
     final body = cart.cartItems.isEmpty
         ? Center(

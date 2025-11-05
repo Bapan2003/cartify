@@ -15,6 +15,10 @@ class CartProvider extends ChangeNotifier {
 
   List<CartModel> _cartItems = [];
   List<CartModel> get cartItems => _cartItems;
+  int totalItems() {
+    // Sum quantity of each product in cart
+    return _cartItems.fold(0, (sum, item) => sum + item.quantity);
+  }
 
   double get totalPrice =>
       _cartItems.fold(0, (sum, item) => sum + item.discountedPrice * item.quantity);
@@ -32,8 +36,16 @@ class CartProvider extends ChangeNotifier {
   }
 
   Future<void> addToCart(CartModel cartModel) async {
-    final ref = _firestore.collection('users').doc(_userId).collection('cart').doc(cartModel.id);
-    await ref.set(cartModel.toMap());
+    final ref = _firestore
+        .collection('users')
+        .doc(_userId)
+        .collection('cart')
+        .doc(cartModel.id);
+
+    await ref.set(
+      cartModel.toMap(),
+      SetOptions(merge: true), // merge ensures update if exists
+    );
   }
 
   Future<void> removeFromCart(CartModel cartModel) async {
@@ -47,5 +59,9 @@ class CartProvider extends ChangeNotifier {
         .collection('cart')
         .doc(cartModel.id)
         .update({'quantity': qty});
+  }
+
+  bool isInCart(String productId) {
+    return _cartItems.any((item) => item.id == productId);
   }
 }

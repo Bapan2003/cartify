@@ -2,10 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:qit/presentations/screens/search/search_screen.dart';
+import 'package:qit/presentations/screens/wishlist/my_wishlist_page.dart';
 import 'package:qit/presentations/widgets/gradient_bar.dart';
 import 'package:qit/providers/category_provider.dart';
 import 'package:tuple/tuple.dart';
 
+import '../../../providers/cart_provider.dart';
 import '../../../providers/dashboard_provider.dart';
 import '../../../providers/search_providers.dart';
 import '../cart/cart_screen.dart';
@@ -22,6 +24,7 @@ class DashboardScreen extends StatelessWidget {
     const CategoryScreen(),
     const CartScreen(),
     const ProfileScreen(),
+     WishlistScreen(),
   ];
 
   @override
@@ -40,11 +43,7 @@ class DashboardScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    Color(0xFFF05A28),
-                    Color(0xFFF8B500),
-
-                  ],
+                  colors: [Color(0xFFF05A28), Color(0xFFF8B500)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -93,21 +92,32 @@ class DashboardScreen extends StatelessWidget {
                                     text: context.read<SearchProvider>().query,
                                   ),
                                   decoration: InputDecoration(
-                                    hintText: "Search for products, brands and more",
+                                    hintText:
+                                        "Search for products, brands and more",
                                     border: InputBorder.none,
-                                    hintStyle: TextStyle(color: Colors.grey.shade600),
+                                    hintStyle: TextStyle(
+                                      color: Colors.grey.shade600,
+                                    ),
                                   ),
                                   onChanged: (value) {
-                                    context.read<SearchProvider>().updateQuery(value);
+                                    context.read<SearchProvider>().updateQuery(
+                                      value,
+                                    );
                                   },
                                   onTap: () async {
                                     final result = await showDialog<String>(
                                       context: context,
                                       barrierDismissible: true,
                                       builder: (_) => Dialog(
-                                        insetPadding: const EdgeInsets.symmetric(horizontal: 300, vertical: 100),
+                                        insetPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 300,
+                                              vertical: 100,
+                                            ),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                         ),
                                         child: const SizedBox(
                                           height: 600,
@@ -119,21 +129,31 @@ class DashboardScreen extends StatelessWidget {
 
                                     if (!context.mounted) return;
                                     if (result != null && result.isNotEmpty) {
-                                      context.read<SearchProvider>().updateQuery(result);
+                                      context
+                                          .read<SearchProvider>()
+                                          .updateQuery(result);
                                     }
                                   },
                                   onSubmitted: (value) {
-                                    context.read<SearchProvider>().updateQuery(value);
+                                    context.read<SearchProvider>().updateQuery(
+                                      value,
+                                    );
                                   },
                                 ),
                               ),
                               if (query.isNotEmpty)
                                 IconButton(
-                                  icon: const Icon(Icons.close, color: Colors.grey, size: 20),
+                                  icon: const Icon(
+                                    Icons.close,
+                                    color: Colors.grey,
+                                    size: 20,
+                                  ),
                                   splashRadius: 18,
                                   tooltip: 'Clear',
                                   onPressed: () {
-                                    context.read<SearchProvider>().updateQuery('');
+                                    context.read<SearchProvider>().updateQuery(
+                                      '',
+                                    );
                                   },
                                 ),
                             ],
@@ -151,15 +171,26 @@ class DashboardScreen extends StatelessWidget {
                       _TopNavIcon(
                         icon: Icons.person_outline,
                         label: "Account",
-                        isSelected: provider.currentIndex == 3,
+                        isSelected: provider.currentIndex == 3||provider.currentIndex==4,
                         onTap: () => provider.setIndex(3),
                       ),
                       const SizedBox(width: 16),
-                      _TopNavIcon(
-                        icon: Icons.shopping_cart_outlined,
-                        label: "Cart",
-                        isSelected: provider.currentIndex == 2,
-                        onTap: () => provider.setIndex(2),
+                      Consumer<CartProvider>(
+                        builder: (context, cartProvider, child) {
+                          int totalItems = cartProvider
+                              .totalItems(); // implement this
+                          if (totalItems == 0) return const SizedBox.shrink();
+                          String displayCount = totalItems > 99
+                              ? "99+"
+                              : totalItems.toString();
+                          return  _TopNavIcon(
+                            icon: Icons.shopping_cart_outlined,
+                            label: "Cart",
+                            isSelected: provider.currentIndex == 2,
+                            onTap: () => provider.setIndex(2),
+                            badgeCount: totalItems,
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -199,11 +230,11 @@ class DashboardScreen extends StatelessWidget {
                       child: context.watch<SearchProvider>().query.isNotEmpty
                           ? SearchScreen()
                           : Container(
-                        key: ValueKey(provider.currentIndex),
-                        padding: const EdgeInsets.all(24),
-                        color: Colors.grey.shade100,
-                        child: _pages[provider.currentIndex],
-                      ),
+                              key: ValueKey(provider.currentIndex),
+                              padding: const EdgeInsets.all(24),
+                              color: Colors.grey.shade100,
+                              child: _pages[provider.currentIndex],
+                            ),
                     ),
                   ),
                 ],
@@ -222,9 +253,15 @@ class DashboardScreen extends StatelessWidget {
         flexibleSpace: const GradientBar(),
         title: Row(
           children: [
-            Selector2<CategoryProvider, SearchProvider, Tuple2<String?, String>>(
-              selector: (_, categoryProvider, searchProvider) =>
-                  Tuple2(categoryProvider.selectedCategory, searchProvider.query),
+            Selector2<
+              CategoryProvider,
+              SearchProvider,
+              Tuple2<String?, String>
+            >(
+              selector: (_, categoryProvider, searchProvider) => Tuple2(
+                categoryProvider.selectedCategory,
+                searchProvider.query,
+              ),
               builder: (_, data, __) {
                 final selectedCategory = data.item1;
                 final query = data.item2;
@@ -237,7 +274,11 @@ class DashboardScreen extends StatelessWidget {
                       onTap: () {
                         context.read<SearchProvider>().updateQuery('');
                       },
-                      child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                     ),
                   );
                 }
@@ -248,9 +289,15 @@ class DashboardScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(8.0),
                     child: GestureDetector(
                       onTap: () {
-                        context.read<CategoryProvider>().clearSelectedCategory();
+                        context
+                            .read<CategoryProvider>()
+                            .clearSelectedCategory();
                       },
-                      child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                     ),
                   );
                 }
@@ -271,6 +318,7 @@ class DashboardScreen extends StatelessWidget {
 
                   if (!context.mounted) return;
                   if (result != null && result is String) {
+                    context.read<SearchProvider>().clearFilters();
                     context.read<SearchProvider>().updateQuery(result);
                   }
                 },
@@ -327,28 +375,74 @@ class DashboardScreen extends StatelessWidget {
         selector: (_, state) => state.query,
       ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: provider.currentIndex,
+        selectedIndex: provider.currentIndex!=4?provider.currentIndex:3,
         onDestinationSelected: provider.setIndex,
         backgroundColor: Colors.white,
         indicatorColor: Colors.orange.shade100,
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), label: "Home"),
-          NavigationDestination(
+        destinations: [
+          const NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            label: "Home",
+          ),
+          const NavigationDestination(
             icon: Icon(Icons.category_outlined),
             label: "Categories",
           ),
           NavigationDestination(
-            icon: Icon(Icons.shopping_cart_outlined),
+            icon: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.shopping_cart_outlined),
+                Positioned(
+                  right: -6,
+                  top: -6,
+                  child: Consumer<CartProvider>(
+                    builder: (context, cartProvider, child) {
+                      int totalItems = cartProvider
+                          .totalItems(); // implement this
+                      if (totalItems == 0) return const SizedBox.shrink();
+                      String displayCount = totalItems > 99
+                          ? "99+"
+                          : totalItems.toString();
+                      return Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Color(0xFFF05A28), Color(0xFFF8B500)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 20,
+                          minHeight: 20,
+                        ),
+                        child: Center(
+                          child: Text(
+                            displayCount,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
             label: "Cart",
           ),
-          NavigationDestination(
+          const NavigationDestination(
             icon: Icon(Icons.person_outline),
             label: "Profile",
           ),
         ],
       ),
     );
-
   }
 }
 
@@ -359,12 +453,14 @@ class _TopNavIcon extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+  final int? badgeCount; // new optional parameter
 
   const _TopNavIcon({
     required this.icon,
     required this.label,
     required this.isSelected,
     required this.onTap,
+    this.badgeCount,
   });
 
   @override
@@ -375,7 +471,43 @@ class _TopNavIcon extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: isSelected ? Colors.white : Colors.white70),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Icon(icon, color: isSelected ? Colors.white : Colors.white70),
+              if (badgeCount != null && badgeCount! > 0)
+                Positioned(
+                  right: -6,
+                  top: -6,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xFFF05A28), Color(0xFFF8B500)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 20,
+                      minHeight: 20,
+                    ),
+                    child: Center(
+                      child: Text(
+                        badgeCount! > 99 ? "99+" : badgeCount!.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(

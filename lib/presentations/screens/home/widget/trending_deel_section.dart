@@ -67,7 +67,10 @@ class TrendingDealsSection extends StatelessWidget {
                       itemCount: products.length,
                       itemBuilder: (context, index) {
                         final product = Product.fromDoc(products[index]);
-
+                        final discountPercent = ((product.retailPrice - product.discountedPrice) /
+                            product.retailPrice *
+                            100)
+                            .toInt();
                         return SizedBox(
                           width: 160,
                           child: _ProductCard(
@@ -76,6 +79,7 @@ class TrendingDealsSection extends StatelessWidget {
                             image: product.imageUrls[0],
                             price: AppHelper.formatAmount(product.discountedPrice.toString()),
                             originalPrice: AppHelper.formatAmount(product.retailPrice.toString()),
+                            discount: discountPercent,
                           ),
                         );
                       },
@@ -89,7 +93,10 @@ class TrendingDealsSection extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 15),
                       itemBuilder: (context, index) {
                         final product = Product.fromDoc(products[index]);
-
+                        final discountPercent = ((product.retailPrice - product.discountedPrice) /
+                            product.retailPrice *
+                            100)
+                            .toInt();
                         return SizedBox(
                           width: 160,
                           child: _ProductCard(
@@ -98,6 +105,7 @@ class TrendingDealsSection extends StatelessWidget {
                             image: product.imageUrls[0],
                             price: AppHelper.formatAmount(product.discountedPrice.toString()),
                             originalPrice: AppHelper.formatAmount(product.retailPrice.toString()),
+                            discount: discountPercent,
                           ),
                         );
                       },
@@ -117,6 +125,7 @@ class _ProductCard extends StatelessWidget {
   final String image;
   final String price;
   final String originalPrice;
+  final int discount;
 
   const _ProductCard({
     required this.id,
@@ -124,10 +133,12 @@ class _ProductCard extends StatelessWidget {
     required this.image,
     required this.price,
     required this.originalPrice,
+    required this.discount,
   });
 
   @override
   Widget build(BuildContext context) {
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       clipBehavior: Clip.antiAlias,
@@ -194,6 +205,26 @@ class _ProductCard extends StatelessWidget {
               ],
             ),
           ),
+          if (discount > 0)
+            Positioned(
+              top: 8,
+              left: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.redAccent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '-$discount%',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12),
+                ),
+              ),
+            ),
           Positioned(
             top: 8,
             right: 8,

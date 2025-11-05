@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 class AppHelper{
@@ -11,6 +12,19 @@ class AppHelper{
       return formatter.format(number);
     } catch (e) {
       return amount; // fallback if parsing fails
+    }
+  }
+
+  static String formatTimestamp(Timestamp timestamp) {
+    final date = timestamp.toDate();
+    return DateFormat('dd MMM yyyy, hh:mm a').format(date);
+  }
+  static String formatDate(String isoDate) {
+    try {
+      final date = DateTime.parse(isoDate);
+      return DateFormat('dd MMM, yyyy').format(date);
+    } catch (e) {
+      return 'Invalid Date';
     }
   }
 }

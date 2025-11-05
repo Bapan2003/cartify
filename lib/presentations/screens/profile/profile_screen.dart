@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -5,13 +7,16 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:qit/core/app_helper.dart';
+import 'package:qit/providers/checkout_provider.dart';
+import 'package:qit/providers/dashboard_provider.dart';
 import 'package:qit/providers/product_provider.dart';
+import 'package:qit/providers/profile_provider.dart';
 import 'package:qit/router/app_route.dart';
 
+import '../../../data/model/order_model.dart';
 import '../../../providers/auth_providers.dart';
 import '../../../providers/wishlist_provider.dart';
-import '../../widgets/profile_avatar.dart';
-import 'dart:io';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -23,11 +28,9 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-
   final ValueNotifier<bool> _isChanged = ValueNotifier(false);
   final ValueNotifier<bool> _isLoading = ValueNotifier(false);
   File? _newProfileImage;
-
   late Map<String, dynamic> _initialData;
 
   @override
@@ -52,11 +55,90 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (_isChanged.value != hasChanged) _isChanged.value = hasChanged;
   }
 
+  void _showProfileBottomSheet(
+    BuildContext context,
+    Map<String, dynamic> userData,
+    AuthProvider auth,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundImage: userData['photoUrl'] != null
+                        ? NetworkImage(userData['photoUrl'])
+                        : null,
+                    child: userData['photoUrl'] == null
+                        ? const Icon(Icons.person, size: 28)
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      userData['name'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Icon(Icons.email, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Signed in as ${userData['email'] ?? ''}",
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  await auth.signOut();
+                  if (context.mounted) context.go('/login');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFA41C),
+                  // Amazon orange
+                  foregroundColor: Colors.white,
+                  shadowColor: Colors.orangeAccent.withOpacity(0.4),
+                  elevation: 3,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  minimumSize: const Size.fromHeight(50),
+                ),
+                child: const Text("Sign Out"),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final bool isWeb = kIsWeb;
-
+    final size = MediaQuery.of(context).size;
+    final isWeb = kIsWeb && size.width > 800;
     return Scaffold(
       backgroundColor: isWeb ? Colors.grey[100] : null,
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
@@ -65,14 +147,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-
           if (!snapshot.hasData || !snapshot.data!.exists) {
             return const Center(child: Text("No profile data found."));
           }
 
           final userData = snapshot.data!.data()!;
           _initialData = userData;
-
           _nameController.text = userData['name'] ?? '';
           _phoneController.text = userData['phone'] ?? '';
 
@@ -81,342 +161,292 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _nameController.addListener(_checkChanges);
           _phoneController.addListener(_checkChanges);
 
-          final content = ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Card(
-              elevation: isWeb ? 6 : 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              margin: const EdgeInsets.all(16).copyWith(top: 40),
+          final fullName = userData['name'] ?? '';
+          final firstWord = fullName.split(' ').first;
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
               child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: ListView(
-                  shrinkWrap: true,
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    /// ✅ Profile avatar updates tracked
-                    ProfileAvatar(
-                      userData: userData,
-                      onImageSelected: (file) async {
-                        _newProfileImage = file;
-                        _checkChanges();
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    Center(
-                      child: Text(
-                        userData['email'] ?? '',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: "Name",
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _phoneController,
-                      decoration: const InputDecoration(
-                        labelText: "Phone Number",
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.phone,
-                    ),
-
-                    /// ✅ Reactive Save Button (name, phone, or image change)
-                    ValueListenableBuilder2<bool, bool>(
-                      first: _isChanged,
-                      second: _isLoading,
-                      builder: (context, isChanged, isLoading, _) {
-                        return Visibility(
-                          visible: _isChanged.value,
-                          child: Column(
-                            children: [
-                              const SizedBox(height: 20),
-                              ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: isChanged
-                                      ? Colors.orange
-                                      : Colors.orange.withOpacity(0.5),
-                                  minimumSize: const Size(double.infinity, 50),
-                                ),
-                                onPressed: !isChanged || isLoading
-                                    ? null
-                                    : () async {
-                                        _isLoading.value = true;
-                                        try {
-                                          String? imageUrl =
-                                              userData['photoUrl'];
-                                          if (_newProfileImage != null) {
-                                            final uid = auth.user?.uid ?? '';
-                                            imageUrl = await context
-                                                .read<AuthProvider>()
-                                                .uploadProfileImage(
-                                                  uid,
-                                                  _newProfileImage!,
-                                                );
-                                          }
-
-                                          await auth.updateProfile(
-                                            _nameController.text.trim(),
-                                            _phoneController.text.trim(),
-                                            photo: imageUrl,
-                                          );
-
-                                          _newProfileImage = null;
-                                          _isChanged.value = false;
-
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  "Profile updated!",
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        } catch (e) {
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  "Failed to update profile: $e",
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        } finally {
-                                          _isLoading.value = false;
-                                        }
-                                      },
-                                icon: isLoading
-                                    ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Icon(Icons.save),
-                                label: Text(
-                                  isLoading ? "Saving..." : "Save Changes",
-                                ),
-                              ),
-                            ],
+                    /// Top Row: Avatar + Hello + Dropdown + Spacer + Settings + Logout
+                    InkWell(
+                      onTap: () =>
+                          _showProfileBottomSheet(context, userData, auth),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundImage: userData['photoUrl'] != null
+                                ? NetworkImage(userData['photoUrl'])
+                                : null,
+                            child: userData['photoUrl'] == null
+                                ? const Icon(Icons.person, size: 28)
+                                : null,
                           ),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-                    Text(
-                      "My Wishlist",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Text(
+                                  "Hello, $firstWord",
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.arrow_drop_down),
+                                  onPressed: () => _showProfileBottomSheet(
+                                    context,
+                                    userData,
+                                    auth,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (!isWeb)
+                            IconButton(
+                              icon: const Icon(Icons.settings),
+                              onPressed: () {
+                                context.push(AppRoute.editProfile);
+                              },
+                            ),
+                          IconButton(
+                            icon: const Icon(Icons.logout),
+                            onPressed: () async {
+                              await auth.signOut();
+                              if (context.mounted) context.go('/login');
+                            },
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
 
-                    Consumer<WishlistProvider>(
-                      builder: (context, wishlistProvider, _) {
-                        final wishlistItems = wishlistProvider.wishlistItems; // list of product models
-                        final itemCount = wishlistItems.length;
+                    const SizedBox(height: 24),
 
-                        if (itemCount == 0) {
-                          return const Text(
-                            "You haven't added anything yet.",
-                            style: TextStyle(color: Colors.grey),
+                    /// Wishlist Section
+                    _buildWishlistSection(),
+
+                    const SizedBox(height: 24),
+
+                    /// Orders Section
+                    StreamBuilder<List<OrderModel>>(
+                      stream: context.read<ProfileProvider>().getUserOrders(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Text("Error: ${snapshot.error}"),
+                          );
+                        }
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return  Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              "No orders yet.",
+                              textAlign: TextAlign.start,
+                              style: TextStyle(color: Colors.grey),
+                            ),
                           );
                         }
 
-                        // Take first 2 items for display
-                        final firstTwoIds = wishlistItems.take(3).toList();
-                        final remainingCount = itemCount - firstTwoIds.length;
+                        final orders = snapshot.data!.where((order) {
+                          DateTime? deliveryDate;
 
-                        return Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              ...firstTwoIds.map((id) => FutureBuilder<Map<String, dynamic>?>(
-                                future:  context.read<ProductProvider>().fetchProductById(id), // your method to fetch product data
-                                builder: (context, snapshot) {
-                                  if (snapshot.connectionState == ConnectionState.waiting) {
-                                    return Container(
-                                      width: 65,
-                                      height: 65,
-                                      margin: const EdgeInsets.only(right: 8),
-                                      color: Colors.grey.shade200,
-                                    );
-                                  }
+                          // Handle both Timestamp and String types
+                          if (order.deliveryDate is Timestamp) {
+                            deliveryDate = (order.deliveryDate as Timestamp).toDate();
+                          } else if (order.deliveryDate is String) {
+                            try {
+                              deliveryDate = DateTime.parse(order.deliveryDate);
+                            } catch (_) {
+                              return false; // invalid format, skip
+                            }
+                          }
 
-                                  if (!snapshot.hasData) {
-                                    return Container(
-                                      width: 65,
-                                      height: 65,
-                                      margin: const EdgeInsets.only(right: 8),
-                                      color: Colors.grey.shade200,
-                                      child: const Icon(Icons.error),
-                                    );
-                                  }
-
-                                  final product = snapshot.data!;
-                                  final imageUrl = product['images'][0] ?? '';
-
-                                  return Padding(
-                                    padding: const EdgeInsets.only(right: 8),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(
-                                        imageUrl,
-                                        width: 65,
-                                        height: 65,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => const Icon(Icons.error),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              )),
-
-
-                              // Show +N more if there are more items
-                              if (remainingCount > 0)
-                                Container(
-                                  width: 65,
-                                  height: 65,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    color: Colors.grey.shade300,
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    '+$remainingCount',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        );
+                          // Keep only if deliveryDate is today or later
+                          return deliveryDate != null &&
+                              deliveryDate.isAfter(DateTime.now().subtract(const Duration(days: 1)));
+                        }).toList();
+                        return _buildOrdersSection(orders);
                       },
                     ),
-
                   ],
                 ),
               ),
             ),
           );
-
-          return Stack(
-            children: [
-              isWeb
-                  ? Align(alignment: Alignment.topCenter, child: content)
-                  : content,
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: 50,
-                    left: 24,
-                    right: 24,
-                  ),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(14),
-                    onTap: () async {
-                      try {
-                        await auth.signOut();
-
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (context.mounted) context.go(AppRoute.login);
-                        });
-                      } catch (e) {
-                        if (Theme.of(context).platform == TargetPlatform.iOS) {
-                          showCupertinoDialog(
-                            context: context,
-                            builder: (_) => CupertinoAlertDialog(
-                              title: const Text("Logout Failed"),
-                              content: Text(e.toString()),
-                              actions: [
-                                CupertinoDialogAction(
-                                  child: const Text("OK"),
-                                  onPressed: () => Navigator.pop(context),
-                                ),
-                              ],
-                            ),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Logout failed: $e")),
-                          );
-                        }
-                      }
-                    },
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 480),
-                      child: Container(
-                        height: 55,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.orange.shade600,
-                              Colors.orange.shade200,
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.redAccent.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.logout, color: Colors.white),
-                            SizedBox(width: 10),
-                            Text(
-                              "Logout",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
         },
       ),
+    );
+  }
+
+  Widget _buildWishlistSection() {
+    return Consumer<WishlistProvider>(
+      builder: (context, wishlistProvider, _) {
+        final wishlistItems = wishlistProvider.wishlistItems;
+        final itemCount = wishlistItems.length;
+
+        if (itemCount == 0) {
+          return const SizedBox.shrink();
+        }
+
+        final firstTwoIds = wishlistItems.take(3).toList();
+        final remainingCount = itemCount - firstTwoIds.length;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Saved Products",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: () => context.read<DashboardProvider>().setIndex(4),
+              child: Container(
+                padding: const EdgeInsets.all(12), // optional padding inside
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade400, width: 1),
+                  // border
+                  borderRadius: BorderRadius.circular(8), // rounded corners
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ...firstTwoIds.map(
+                      (id) => FutureBuilder<Map<String, dynamic>?>(
+                        future: context
+                            .read<ProductProvider>()
+                            .fetchProductById(id),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return Container(
+                              width: 65,
+                              height: 65,
+                              color: Colors.grey.shade200,
+                              margin: const EdgeInsets.only(right: 8),
+                            );
+                          }
+                          final product = snapshot.data!;
+                          final imageUrl = product['images'][0] ?? '';
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                imageUrl,
+                                width: 70,
+                                height: 70,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => SizedBox(
+                                  width: 70,
+                                  height: 70,
+                                  child: Icon(Icons.error),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    // show remaining count if more than 2 products
+                    if (remainingCount > 0)
+                      Container(
+                        width: 65,
+                        height: 65,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '+$remainingCount',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildOrdersSection(List<OrderModel> orders) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "My Orders",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 12),
+        if (orders.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              "No orders yet.",
+              textAlign: TextAlign.start,
+              style: TextStyle(color: Colors.grey),
+            ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: orders.length,
+            itemBuilder: (context, index) {
+              final order = orders[index];
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.shopping_bag_outlined,
+                    color: Colors.orange,
+                  ),
+                  title: Text("Order #${order.id.toString().substring(0,10)}...", ),
+                  subtitle: Text(
+                    "${order.address['name']} • ${AppHelper.formatDate(order.deliveryDate)}\n${order.items.length} items — ₹${AppHelper.formatAmount(order.bill['order_total'].toString())}",
+                  ),
+                  isThreeLine: true,
+                  trailing: Text(
+                    order.payment=='COD'?'Cash on Delivery':'Pay by UPI',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              );
+            },
+          ),
+      ],
     );
   }
 }

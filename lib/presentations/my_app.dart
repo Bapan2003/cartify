@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:qit/core/service_locator.dart';
 import 'package:qit/presentations/screens/splash/splash_screen.dart';
 import 'package:qit/providers/category_provider.dart';
+import 'package:qit/providers/profile_provider.dart';
 import 'package:qit/providers/search_providers.dart';
 import 'package:qit/repo/auth_service/auth_service.dart';
 
@@ -44,6 +45,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(create: (_) => SearchHistoryProvider()..init()),
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
         ChangeNotifierProvider(create: (_) => WishlistProvider()),
+        ChangeNotifierProvider(create: (_) => ProfileProvider()..loadUserData()),
 
       ],
       child: MaterialApp.router(

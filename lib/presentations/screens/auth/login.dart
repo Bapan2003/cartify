@@ -430,7 +430,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!context.mounted) return;
       context.go(AppRoute.dashboard);
       context.read<DashboardProvider>().setIndex(0);
-    } catch (e) {
+    } catch (e,stack) {
+      debugPrintStack(stackTrace: stack);
       final msg = e.toString();
       if (defaultTargetPlatform == TargetPlatform.iOS) {
         showCupertinoDialog(

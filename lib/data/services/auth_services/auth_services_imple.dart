@@ -105,7 +105,9 @@ class AuthServicesImplementation implements AuthServices{
           message = "Login failed. Please check your email and password.";
       }
       throw message;
-    } catch (e) {
+    } catch (e,stack) {
+      print(e.toString());
+      debugPrintStack(stackTrace: stack);
       throw "Something went wrong. Please try again.";
     }
   }

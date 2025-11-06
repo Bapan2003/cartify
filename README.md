@@ -137,19 +137,7 @@ flutter build web --release
 
 ---
 
-## 🧰 Environment Variables
 
-If your app connects to external APIs or Firebase, create a `.env` file:
-
-```bash
-API_URL=https://api.cartify.app
-APP_ENV=production
-FIREBASE_API_KEY=your_firebase_key
-```
-
-Then load it using [`flutter_dotenv`](https://pub.dev/packages/flutter_dotenv).
-
----
 
 ## 🧑‍💻 Contributing
 
@@ -183,6 +171,13 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 * [Flutter](https://flutter.dev) — the magic behind the app
 * [Firebase](https://firebase.google.com) — for backend & authentication
 * [Material Icons](https://fonts.google.com/icons) — for modern UI icons
+
+---
+## 🐛 Project Link
+
+- Android:- https://drive.google.com/file/d/17hp-NNEZ8B0cyW3C1h76JhmYvVoMCDA-/view?usp=share_link
+- Web: - https://bapan2003.github.io/cartify-web/#
+
 
 ---
 

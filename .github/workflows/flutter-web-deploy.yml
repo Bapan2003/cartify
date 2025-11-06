@@ -3,7 +3,11 @@ name: Deploy Flutter Web to GitHub Pages
 on:
   push:
     branches:
-      - main  # change to your default branch if different
+      - main
+permissions:
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build:

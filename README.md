@@ -33,7 +33,7 @@
 | **Language**             | Dart                                                            |
 | **UI Design System**     | Material Design (Android) & Cupertino (iOS)                     |
 | **State Management**     | Provider                                                        |
-| **Dependency Injection** | Provider                                                        |
+| **Dependency Injection** | GetIt                                                        |
 | **Backend**              | Firebase                                                        |
 | **Database**             | Firebase Firestore                                              |
 | **Authentication**       | Firebase Auth / Google Sign-In                                  |

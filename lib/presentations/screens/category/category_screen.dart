@@ -19,15 +19,34 @@ class _CategoryScreenState extends State<CategoryScreen> {
   bool _initializedForWeb = false;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final isWeb = MediaQuery.of(context).size.width > 700;
+  void initState() {
+    super.initState();
     final provider = context.read<CategoryProvider>();
 
-    // ✅ Load first category automatically for web
-    if (isWeb && !_initializedForWeb && provider.categories.isNotEmpty) {
+    // Fetch categories initially
+    provider.fetchCategories().then((_) {
+      if(!context.mounted)return;
+      if (MediaQuery.of(context).size.width > 700 && provider.categories.isNotEmpty) {
+        provider.fetchProductsByCategory(provider.categories.first);
+      }
+    });
+  }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final provider = context.read<CategoryProvider>();
+    final isWeb = MediaQuery.of(context).size.width > 700;
+
+    if (isWeb && !_initializedForWeb) {
       _initializedForWeb = true;
-      provider.fetchProductsByCategory(provider.categories.first);
+
+      // Delay until after first frame so categories are loaded
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (provider.categories.isNotEmpty) {
+          provider.fetchProductsByCategory(provider.categories.first);
+        }
+      });
     }
   }
 

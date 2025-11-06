@@ -20,7 +20,7 @@ class _ProductReviewSectionState extends State<ProductReviewSection> {
   late final ValueNotifier<List<Map<String, dynamic>>> reviewsNotifier;
   late final ValueNotifier<bool> isLoadingNotifier;
   late final ValueNotifier<double> ratingNotifier;
-  final TextEditingController _commentController = TextEditingController();
+  late final TextEditingController _commentController ;
 
   @override
   void initState() {
@@ -28,6 +28,7 @@ class _ProductReviewSectionState extends State<ProductReviewSection> {
     reviewsNotifier = ValueNotifier(widget.initialReviews);
     isLoadingNotifier = ValueNotifier(false);
     ratingNotifier = ValueNotifier(0.0);
+    _commentController= TextEditingController();
   }
 
   @override
@@ -44,9 +45,9 @@ class _ProductReviewSectionState extends State<ProductReviewSection> {
     final rating = ratingNotifier.value;
 
     if (rating == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please provide a rating")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please provide a rating")));
       return;
     }
 
@@ -92,7 +93,8 @@ class _ProductReviewSectionState extends State<ProductReviewSection> {
           const SnackBar(content: Text("Review added successfully!")),
         );
       } else {
-        final newAvg = ((currentAvg * existingCount) + rating) / (existingCount + 1);
+        final newAvg =
+            ((currentAvg * existingCount) + rating) / (existingCount + 1);
 
         await productRef.update({
           'review_count': existingCount + 1,
@@ -105,9 +107,9 @@ class _ProductReviewSectionState extends State<ProductReviewSection> {
       }
     } catch (e) {
       debugPrint('Error adding/updating review: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: ${e.toString()}")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
     } finally {
       _commentController.clear();
       ratingNotifier.value = 0;
@@ -117,131 +119,129 @@ class _ProductReviewSectionState extends State<ProductReviewSection> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Customer Reviews",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          "Customer Reviews",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
 
-          ValueListenableBuilder<List<Map<String, dynamic>>>(
-            valueListenable: reviewsNotifier,
-            builder: (context, reviews, _) {
-              if (reviews.isEmpty) {
-                return const Text(
-                  "No reviews yet. Be the first to review!",
-                  style: TextStyle(color: Colors.grey),
+        ValueListenableBuilder<List<Map<String, dynamic>>>(
+          valueListenable: reviewsNotifier,
+          builder: (context, reviews, _) {
+            if (reviews.isEmpty) {
+              return const Text(
+                "No reviews yet. Be the first to review!",
+                style: TextStyle(color: Colors.grey),
+              );
+            }
+
+            return ListView.builder(
+              itemCount: reviews.length,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemBuilder: (ctx, index) {
+                final item = reviews[index];
+                return _buildReview(
+                  rating: (item['rating'] as num).toDouble(),
+                  comment: item['comment'],
+                  date: (item['createdAt'] as Timestamp).toDate(),
                 );
-              }
+              },
+            );
+          },
+        ),
 
-              return ListView.builder(
-                itemCount: reviews.length,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemBuilder: (ctx, index) {
-                  final item = reviews[index];
-                  return _buildReview(
-                    rating: (item['rating'] as num).toDouble(),
-                    comment: item['comment'],
-                    date: (item['createdAt'] as Timestamp).toDate(),
-                  );
-                },
-              );
-            },
-          ),
+        const SizedBox(height: 16),
+        const Divider(thickness: 1),
+        const SizedBox(height: 10),
 
-          const SizedBox(height: 16),
-          const Divider(thickness: 1),
-          const SizedBox(height: 10),
+        const Text(
+          "Write a Review",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
 
-          const Text(
-            "Write a Review",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-
-          // ⭐ Rating Stars
-          ValueListenableBuilder<double>(
-            valueListenable: ratingNotifier,
-            builder: (context, rating, _) {
-              return Row(
-                children: List.generate(
-                  5,
-                      (index) => IconButton(
-                    icon: Icon(
-                      index < rating
-                          ? Icons.star_rounded
-                          : Icons.star_border_rounded,
-                      color: Colors.amber,
-                      size: 28,
-                    ),
-                    onPressed: () => ratingNotifier.value = index + 1.0,
+        // ⭐ Rating Stars
+        ValueListenableBuilder<double>(
+          valueListenable: ratingNotifier,
+          builder: (context, rating, _) {
+            return Row(
+              children: List.generate(
+                5,
+                (index) => IconButton(
+                  icon: Icon(
+                    index < rating
+                        ? Icons.star_rounded
+                        : Icons.star_border_rounded,
+                    color: Colors.amber,
+                    size: 28,
                   ),
+                  onPressed: () => ratingNotifier.value = index + 1.0,
                 ),
-              );
-            },
-          ),
-
-          TextField(
-            controller: _commentController,
-            maxLines: 3,
-            decoration: InputDecoration(
-              hintText: 'Share your experience (optional)...',
-              filled: true,
-              fillColor: Colors.grey.shade100,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
+            );
+          },
+        ),
+
+        TextField(
+          controller: _commentController,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: 'Share your experience (optional)...',
+            filled: true,
+            fillColor: Colors.grey.shade100,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade300),
             ),
           ),
-          const SizedBox(height: 10),
+        ),
+        const SizedBox(height: 10),
 
-          ValueListenableBuilder<bool>(
-            valueListenable: isLoadingNotifier,
-            builder: (context, isLoading, _) {
-              return SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    backgroundColor: Colors.amber.shade700,
+        ValueListenableBuilder<bool>(
+          valueListenable: isLoadingNotifier,
+          builder: (context, isLoading, _) {
+            return SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
-                  onPressed: isLoading ? null : _addReview,
-                  child: isLoading
-                      ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.white,
-                      ),
-                    ),
-                  )
-                      : const Text(
-                    'Submit Review',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
+                  backgroundColor: Colors.amber.shade700,
                 ),
-              );
-            },
-          ),
-        ],
-      ),
+                onPressed: isLoading ? null : _addReview,
+                child: isLoading
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
+                    : const Text(
+                        'Submit Review',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -282,7 +282,7 @@ class _ProductReviewSectionState extends State<ProductReviewSection> {
                 children: [
                   ...List.generate(
                     5,
-                        (i) => Icon(
+                    (i) => Icon(
                       i < rating
                           ? Icons.star_rounded
                           : Icons.star_border_rounded,

@@ -229,7 +229,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 24),
 
                     /// Wishlist Section
-                    _buildWishlistSection(),
+                    _buildWishlistSection(context),
 
                     const SizedBox(height: 24),
 
@@ -263,25 +263,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           );
                         }
-
-                        final orders = snapshot.data!.where((order) {
-                          DateTime? deliveryDate;
-
-                          // Handle both Timestamp and String types
-                          if (order.deliveryDate is Timestamp) {
-                            deliveryDate = (order.deliveryDate as Timestamp).toDate();
-                          } else if (order.deliveryDate is String) {
-                            try {
-                              deliveryDate = DateTime.parse(order.deliveryDate);
-                            } catch (_) {
-                              return false; // invalid format, skip
-                            }
-                          }
-
-                          // Keep only if deliveryDate is today or later
-                          return deliveryDate != null &&
-                              deliveryDate.isAfter(DateTime.now().subtract(const Duration(days: 1)));
-                        }).toList();
+                        final orders = snapshot.data!;
+                        // final orders = snapshot.data!.where((order) {
+                        //   DateTime? deliveryDate;
+                        //
+                        //   // Handle both Timestamp and String types
+                        //   if (order.deliveryDate is Timestamp) {
+                        //     deliveryDate = (order.deliveryDate as Timestamp).toDate();
+                        //   } else if (order.deliveryDate is String) {
+                        //     try {
+                        //       deliveryDate = DateTime.parse(order.deliveryDate);
+                        //     } catch (_) {
+                        //       return false; // invalid format, skip
+                        //     }
+                        //   }
+                        //
+                        //   // Keep only if deliveryDate is today or later
+                        //   return deliveryDate != null &&
+                        //       deliveryDate.isAfter(DateTime.now().subtract(const Duration(days: 1)));
+                        // }).toList();
                         return _buildOrdersSection(orders);
                       },
                     ),
@@ -295,15 +295,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildWishlistSection() {
-    return Consumer<WishlistProvider>(
-      builder: (context, wishlistProvider, _) {
-        final wishlistItems = wishlistProvider.wishlistItems;
-        final itemCount = wishlistItems.length;
+  Widget _buildWishlistSection(BuildContext context) {
 
-        if (itemCount == 0) {
+    return StreamBuilder<List<String>>(
+      stream: context.read<WishlistProvider>().wishlistStream(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox.shrink();
         }
+
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        // ✅ Extract wishlist product IDs
+        final wishlistItems = snapshot.data!;
+        final itemCount = wishlistItems.length;
 
         final firstTwoIds = wishlistItems.take(3).toList();
         final remainingCount = itemCount - firstTwoIds.length;
@@ -319,17 +326,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
             InkWell(
               onTap: () => context.read<DashboardProvider>().setIndex(4),
               child: Container(
-                padding: const EdgeInsets.all(12), // optional padding inside
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey.shade400, width: 1),
-                  // border
-                  borderRadius: BorderRadius.circular(8), // rounded corners
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // 🔹 Show the first 3 wishlist product images
                     ...firstTwoIds.map(
-                      (id) => FutureBuilder<Map<String, dynamic>?>(
+                          (id) => FutureBuilder<Map<String, dynamic>?>(
                         future: context
                             .read<ProductProvider>()
                             .fetchProductById(id),
@@ -342,8 +349,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               margin: const EdgeInsets.only(right: 8),
                             );
                           }
+
                           final product = snapshot.data!;
-                          final imageUrl = product['images'][0] ?? '';
+                          final imageUrl = (product['images'] != null &&
+                              product['images'].isNotEmpty)
+                              ? product['images'][0]
+                              : '';
+
                           return Padding(
                             padding: const EdgeInsets.only(right: 8),
                             child: ClipRRect(
@@ -353,7 +365,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 width: 70,
                                 height: 70,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => SizedBox(
+                                errorBuilder: (_, __, ___) => const SizedBox(
                                   width: 70,
                                   height: 70,
                                   child: Icon(Icons.error),
@@ -365,7 +377,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
 
-                    // show remaining count if more than 2 products
+                    // 🔹 Remaining count bubble (if more than 3)
                     if (remainingCount > 0)
                       Container(
                         width: 65,
@@ -392,6 +404,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
     );
   }
+
 
   Widget _buildOrdersSection(List<OrderModel> orders) {
     return Column(
@@ -423,24 +436,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 6),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: ListTile(
-                  leading: const Icon(
-                    Icons.shopping_bag_outlined,
-                    color: Colors.orange,
+              return InkWell(
+                onTap: (){
+                  context.read<ProfileProvider>().setSelectedOrder(order);
+                  context.read<DashboardProvider>().setIndex(5);
+                },
+                child: Card(
+                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  title: Text("Order #${order.id.toString().substring(0,10)}...", ),
-                  subtitle: Text(
-                    "${order.address['name']} • ${AppHelper.formatDate(order.deliveryDate)}\n${order.items.length} items — ₹${AppHelper.formatAmount(order.bill['order_total'].toString())}",
-                  ),
-                  isThreeLine: true,
-                  trailing: Text(
-                    order.payment=='COD'?'Cash on Delivery':'Pay by UPI',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  child: ListTile(
+                    leading: const Icon(
+                      Icons.shopping_bag_outlined,
+                      color: Colors.orange,
+                    ),
+                    title: Text("Order #${order.id.toString().substring(0,10)}...", ),
+                    subtitle: Text(
+                      "${order.address['name']} • ${AppHelper.formatDate(order.deliveryDate)}\n${order.items.length} items — ₹${AppHelper.formatAmount(order.bill['order_total'].toString())}",
+                    ),
+                    isThreeLine: true,
+                    trailing: Text(
+                      order.payment=='COD'?'Cash on Delivery':'Pay by UPI',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                   ),
                 ),
               );

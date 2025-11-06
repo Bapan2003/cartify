@@ -9,23 +9,19 @@ class WishlistProvider extends ChangeNotifier {
   List<String> _wishlistItems = [];
   List<String> get wishlistItems => _wishlistItems;
 
-  WishlistProvider() {
-    fetchWishlist();
-  }
+
 
   String get userId => FirebaseAuth.instance.currentUser?.uid ?? '';
 
-  void fetchWishlist() {
-    if (userId.isEmpty) return;
-    _firestore
+  Stream<List<String>> wishlistStream() {
+    if (userId.isEmpty) return const Stream.empty();
+
+    return _firestore
         .collection('users')
         .doc(userId)
         .collection('wishlist')
         .snapshots()
-        .listen((snapshot) {
-      _wishlistItems = snapshot.docs.map((doc) => doc.id).toList();
-      notifyListeners();
-    });
+        .map((snapshot) => snapshot.docs.map((doc) => doc.id).toList());
   }
 
   /// Add a product to wishlist

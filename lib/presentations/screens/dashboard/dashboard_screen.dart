@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:qit/presentations/screens/checkout/order_details.dart';
 import 'package:qit/presentations/screens/search/search_screen.dart';
 import 'package:qit/presentations/screens/wishlist/my_wishlist_page.dart';
 import 'package:qit/presentations/widgets/gradient_bar.dart';
@@ -25,6 +26,7 @@ class DashboardScreen extends StatelessWidget {
     const CartScreen(),
     const ProfileScreen(),
      WishlistScreen(),
+     OrderDetailsScreen(),
   ];
 
   @override
@@ -171,7 +173,7 @@ class DashboardScreen extends StatelessWidget {
                       _TopNavIcon(
                         icon: Icons.person_outline,
                         label: "Account",
-                        isSelected: provider.currentIndex == 3||provider.currentIndex==4,
+                        isSelected: provider.currentIndex == 3||provider.currentIndex==4||provider.currentIndex==5,
                         onTap: () => provider.setIndex(3),
                       ),
                       const SizedBox(width: 16),
@@ -302,6 +304,22 @@ class DashboardScreen extends StatelessWidget {
                   );
                 }
 
+                if (provider.currentIndex == 4 || provider.currentIndex == 5 ) {
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: GestureDetector(
+                      onTap: () {
+                       provider.setIndex(3);
+                      },
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                  );
+                }
+
                 // 🔹 Nothing
                 return const SizedBox.shrink();
               },
@@ -375,7 +393,7 @@ class DashboardScreen extends StatelessWidget {
         selector: (_, state) => state.query,
       ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: provider.currentIndex!=4?provider.currentIndex:3,
+        selectedIndex: (provider.currentIndex!=4&&provider.currentIndex!=5)?provider.currentIndex:3,
         onDestinationSelected: provider.setIndex,
         backgroundColor: Colors.white,
         indicatorColor: Colors.orange.shade100,

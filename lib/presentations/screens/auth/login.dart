@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:qit/providers/dashboard_provider.dart';
 import 'package:qit/router/app_route.dart';
 
 import '../../../providers/auth_providers.dart';
@@ -428,6 +429,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!context.mounted) return;
       context.go(AppRoute.dashboard);
+      context.read<DashboardProvider>().setIndex(0);
     } catch (e) {
       final msg = e.toString();
       if (defaultTargetPlatform == TargetPlatform.iOS) {

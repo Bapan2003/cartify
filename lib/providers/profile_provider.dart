@@ -79,6 +79,15 @@ class ProfileProvider extends ChangeNotifier {
     }
   }
 
+  OrderModel? _selectedOrder;
+
+  OrderModel? get selectedOrder => _selectedOrder;
+
+  void setSelectedOrder(OrderModel order) {
+    _selectedOrder = order;
+    notifyListeners();
+  }
+
   // Upload image to Firebase Storage
   Future<String> _uploadImage(XFile image) async {
     final user = _auth.currentUser!;

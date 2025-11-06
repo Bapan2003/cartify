@@ -1,6 +1,6 @@
 {
-    "name": "qit",
-    "short_name": "qit",
+    "name": "Cartify",
+    "short_name": "Cartify",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

@@ -70,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      "Amazon Clone",
+                      "Cartify",
                       style: Theme.of(context).textTheme.headlineMedium
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
@@ -251,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildCupertinoLogin(BuildContext context, bool isWeb, Size size) {
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.systemGroupedBackground,
-      navigationBar: const CupertinoNavigationBar(middle: Text("Amazon Clone")),
+      navigationBar: const CupertinoNavigationBar(middle: Text("Cartify")),
       child: SafeArea(
         child: Center(
           child: ConstrainedBox(

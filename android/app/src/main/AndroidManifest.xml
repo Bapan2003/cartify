@@ -5,7 +5,7 @@
     <application
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:label="qit"
+        android:label="Cartify"
         android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"

@@ -128,141 +128,133 @@ class _ProductReviewSectionState extends State<ProductReviewSection> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<bool>(
-      valueListenable: isLoadingNotifier,
-      builder: (context, isLoading, _) {
-        return AbsorbPointer(
-          absorbing: isLoading,
-          child: Stack(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Customer Reviews",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    return Stack(
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "Customer Reviews",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+
+            ValueListenableBuilder<List<Map<String, dynamic>>>(
+              valueListenable: reviewsNotifier,
+              builder: (context, reviews, _) {
+                if (reviews.isEmpty) {
+                  return const Text(
+                    "No reviews yet. Be the first to review!",
+                    style: TextStyle(color: Colors.grey),
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: reviews.length,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemBuilder: (ctx, index) {
+                    final item = reviews[index];
+                    return _buildReview(
+                      rating: (item['rating'] as num).toDouble(),
+                      comment: item['comment'],
+                      date: (item['createdAt'] as Timestamp).toDate(),
+                    );
+                  },
+                );
+              },
+            ),
+
+            const SizedBox(height: 16),
+            const Divider(thickness: 1),
+            const SizedBox(height: 10),
+
+            const Text(
+              "Write a Review",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+
+            // ⭐ Rating Stars (reactive)
+            ValueListenableBuilder<double>(
+              valueListenable: ratingNotifier,
+              builder: (context, rating, _) {
+                return Row(
+                  children: List.generate(
+                    5,
+                        (index) => IconButton(
+                      icon: Icon(
+                        index < rating
+                            ? Icons.star_rounded
+                            : Icons.star_border_rounded,
+                        color: Colors.amber,
+                        size: 28,
+                      ),
+                      onPressed: () => ratingNotifier.value = index + 1.0,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                );
+              },
+            ),
 
-                  ValueListenableBuilder<List<Map<String, dynamic>>>(
-                    valueListenable: reviewsNotifier,
-                    builder: (context, reviews, _) {
-                      if (reviews.isEmpty) {
-                        return const Text(
-                          "No reviews yet. Be the first to review!",
-                          style: TextStyle(color: Colors.grey),
-                        );
-                      }
+            TextField(
+              controller: _commentController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Share your experience (optional)...',
+                filled: true,
+                fillColor: Colors.grey.shade100,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
 
-                      return ListView.builder(
-                        itemCount: reviews.length,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemBuilder: (ctx, index) {
-                          final item = reviews[index];
-                          return _buildReview(
-                            rating: (item['rating'] as num).toDouble(),
-                            comment: item['comment'],
-                            date: (item['createdAt'] as Timestamp).toDate(),
-                          );
-                        },
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 16),
-                  const Divider(thickness: 1),
-                  const SizedBox(height: 10),
-
-                  const Text(
-                    "Write a Review",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // ⭐ Rating Stars (reactive)
-                  ValueListenableBuilder<double>(
-                    valueListenable: ratingNotifier,
-                    builder: (context, rating, _) {
-                      return Row(
-                        children: List.generate(
-                          5,
-                          (index) => IconButton(
-                            icon: Icon(
-                              index < rating
-                                  ? Icons.star_rounded
-                                  : Icons.star_border_rounded,
-                              color: Colors.amber,
-                              size: 28,
-                            ),
-                            onPressed: () => ratingNotifier.value = index + 1.0,
-                          ),
+            ValueListenableBuilder<bool>(
+              valueListenable: isLoadingNotifier,
+              builder: (context, isLoading, _) {
+                return SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      backgroundColor: Colors.amber.shade700,
+                    ),
+                    onPressed: isLoading ? null : _addReview,
+                    child: isLoading
+                        ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.white,
                         ),
-                      );
-                    },
-                  ),
-
-                  TextField(
-                    controller: _commentController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      hintText: 'Share your experience (optional)...',
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                    )
+                        : const Text(
+                      'Submit Review',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
-
-                  ValueListenableBuilder<bool>(
-                    valueListenable: isLoadingNotifier,
-                    builder: (context, isLoading, _) {
-                      return SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            textStyle: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            backgroundColor: Colors.amber.shade700,
-                          ),
-                          onPressed: isLoading ? null : _addReview,
-                          child: isLoading
-                              ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                )
-                              : const Text(
-                                  'Submit Review',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
+                );
+              },
+            ),
+          ],
+        ),
+      ],
     );
   }
 

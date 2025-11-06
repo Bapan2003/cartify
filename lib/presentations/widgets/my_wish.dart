@@ -5,14 +5,13 @@ import '../../providers/wishlist_provider.dart';
 
 class WishButton extends StatefulWidget {
   final String id;
-  const WishButton({required this.id, super.key});
+  const WishButton({super.key, required this.id});
 
   @override
   State<WishButton> createState() => _WishButtonState();
 }
 
-class _WishButtonState extends State<WishButton>
-    with SingleTickerProviderStateMixin {
+class _WishButtonState extends State<WishButton> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -40,22 +39,21 @@ class _WishButtonState extends State<WishButton>
 
   @override
   Widget build(BuildContext context) {
-    final wishlistProvider = context.read<WishlistProvider>();
+    return Selector<WishlistProvider, bool>(
+      selector: (_, provider) => provider.isInWishlist(widget.id),
+      builder: (_, isWishlisted, __) {
+        final wishlistProvider = context.read<WishlistProvider>();
 
-    return InkWell(
-      onTap: () {
-        final isWishlisted = wishlistProvider.isInWishlist(widget.id);
-        if (isWishlisted) {
-          wishlistProvider.removeFromWishlist(widget.id);
-        } else {
-          wishlistProvider.addToWishlist(widget.id);
-        }
-        _animate(); // trigger animation
-      },
-      child: Selector<WishlistProvider, bool>(
-        selector: (_, s) => s.isInWishlist(widget.id),
-        builder: (_, isWishlisted, __) {
-          return AnimatedBuilder(
+        return InkWell(
+          onTap: () async {
+            if (isWishlisted) {
+              await wishlistProvider.removeFromWishlist(widget.id);
+            } else {
+              await wishlistProvider.addToWishlist(widget.id);
+            }
+            _animate(); // trigger animation
+          },
+          child: AnimatedBuilder(
             animation: _controller,
             builder: (_, child) {
               return Transform.scale(
@@ -68,10 +66,11 @@ class _WishButtonState extends State<WishButton>
               color: isWishlisted ? Colors.red : Colors.grey,
               size: 28,
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
+
 
